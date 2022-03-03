@@ -42,14 +42,6 @@ To install the code through Github, open a terminal and run:
 
 .. code-block:: bash
 
-    pip install git+https://github.com/ndawlab/vectorRPE.git
-
-Alternately, you can clone the repository and install locally:
-
-.. code-block:: bash
-
     git clone https://github.com/ndawlab/vectorRPE
-    cd vectorRPE
-    pip install -e .
 
 For convenience, we recommend setting up a virtual environment before running the code, to avoid any unpleasant version control issues or interactions with other projects you're working on. 
