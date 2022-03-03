@@ -23,9 +23,12 @@ Project Organization
     │
     ├── virmen                       <- Source code for ViRMEn graphic engine for simulating VR task 
     │
-    ├── deepRL                       <- Source code for deep RL code, based on Stable Baselines Version <TODO: fill in> 
+    ├── deepRL                       <- Source code for deep RL network, requires Stable Baselines 2.10.0
+    │   ├── custom_cnn_lstm.py       <- Script for training deep RL network 
+    │   ├── evalute_policies.ipynb   <- Notebook for evaluating trained deep RL network 
+    │   ├── evaluate_policy.py       <- Helper functions for evaluating deep RL network 
     │
-    ├── vrenv                        <- Stable Baselines environment <TODO: discuss how to donwload> 
+    ├── gym_vr                       <- Stable Baselines Custom Environment, requires gym 0.14.0 and setting up a custom environment 
     │
     ├── requirements.txt             <- Python packages used in this project.
     
@@ -33,7 +36,7 @@ Project Organization
 Installation Requirements 
 ^^^^^^^^^^^^
 
-ViRMEn and the deep RL code can only be run on a windows desktop. ViRMEn source code is self-contained in the folder, and the version we use is the 2016-2-12 found `here <http://pni.princeton.edu/pni-software-tools/virmen-download>`_. The deep RL source code requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ <TODO: version info for stable baselines>. 
+ViRMEn and the deep RL code can only be run on a Windows 10 Desktop with Python 3.7+. ViRMEn source code is self-contained in the folder, based on the `ViRMEn pacakge <http://pni.princeton.edu/pni-software-tools/virmen-download>`_ (version 2016-2-12). The ``deepRL`` source code for the network requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0). In order to run the deep RL network with the VR task from ViRMEn, you must set up the custom environment ``gym_vr``, which requires the `Open AI gym package <https://github.com/openai/gym>`_ (version 0.14.0) and following these `instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_. 
 
 Installation 
 ^^^^^^^^^^^^
