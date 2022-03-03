@@ -16,6 +16,11 @@ Project Organization
 ::
 
     │
+    ├── deepRL                       <- Source code for deep RL network, requires Stable Baselines 2.10.0
+    │   ├── custom_cnn_lstm.py       <- Script for training deep RL network 
+    │   ├── evalute_policies.ipynb   <- Notebook for evaluating trained deep RL network 
+    │   ├── evaluate_policy.py       <- Helper functions for evaluating deep RL network 
+    │
     ├── figures                      <- Notebooks for recreating figure panels for the manuscript
     │   ├── Figure 2.ipynb           <- Psychometric curves for mouse and Vector RPEs, Scalar value from model plotted against trial difficulties 
     │   ├── Figure 3.ipynb           <- Vector RPE units and DAnergic neurons response during the cue period. 
@@ -24,14 +29,9 @@ Project Organization
     │   ├── Figure 6.ipynb           <- Vector RPE units and DAergic neurons response during outcome period. 
     │   ├── utils                    <- Matlab scripts and functions for recreating figure panels. 
     │
-    ├── virmen                       <- Source code for ViRMEn graphic engine for simulating VR task 
-    │
-    ├── deepRL                       <- Source code for deep RL network, requires Stable Baselines 2.10.0
-    │   ├── custom_cnn_lstm.py       <- Script for training deep RL network 
-    │   ├── evalute_policies.ipynb   <- Notebook for evaluating trained deep RL network 
-    │   ├── evaluate_policy.py       <- Helper functions for evaluating deep RL network 
-    │
     ├── gym_vr                       <- Stable Baselines Custom Environment, requires gym 0.14.0 and setting up a custom environment 
+    │
+    ├── virmen                       <- Source code for ViRMEn graphic engine for simulating VR task 
     │
     
     
