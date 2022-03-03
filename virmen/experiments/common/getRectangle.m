@@ -1,0 +1,16 @@
+function rectangle = getRectangle(vr, floorName)
+
+  % Get the floor object
+  floorIndex  = vr.worlds{vr.currentWorld}.objects.indices.(floorName);
+  floor       = vr.exper.worlds{vr.currentWorld}.objects{floorIndex};
+
+  % Convert to radians to calculate axes of rectangle
+  angle       = floor.rotation * pi/180;
+  rectangle   = struct( 'center', [floor.x, floor.y]          ...
+                      , 'axis1' , [cos(angle),  sin(angle)]   ...
+                      , 'axis2' , [sin(angle), -cos(angle)]   ...
+                      , 'width1', floor.width  / 2            ...
+                      , 'width2', floor.height / 2            ...
+                      );
+
+end

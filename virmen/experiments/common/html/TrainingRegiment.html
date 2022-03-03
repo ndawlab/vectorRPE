@@ -1,0 +1,1500 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>TrainingRegiment</title><meta name="generator" content="MATLAB 7.12"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-10-24"><meta name="DC.source" content="TrainingRegiment.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> TrainingRegiment &lt; handle
+
+  <span class="comment">%------- Constants</span>
+  <span class="keyword">properties</span> (Constant)
+    DEFAULT_ID    = <span class="string">'k'</span>
+    WEIGHT_RANGE  = [10 30]
+
+    DAYS          = {<span class="string">'Mon'</span>, <span class="string">'Tue'</span>, <span class="string">'Wed'</span>, <span class="string">'Thu'</span>, <span class="string">'Fri'</span>}
+    HOURS         = [8 26]          <span class="comment">% Min/max hour of the day</span>
+    GUI_SIZE      = 0.9
+    GUI_COLOR     = [1 1 1] * 0.905
+    GUI_FONT      = 11
+    MONITOR       = 1
+    CHOICES       = Choice.all()
+    CHOICE_NAME   = arrayfun(@char, Choice.all(), <span class="string">'UniformOutput'</span>, false)
+  	CHOICE_COLOR  = [138 163 49; 119 157 191] / 255
+    CHOICE_MARKER = {<span class="string">'&lt;'</span>, <span class="string">'&gt;'</span>}
+
+    RGX_NUMBER    = <span class="string">'^\s*([+-]?\s*[0-9]*[.]?[0-9]*)'</span>
+    RGX_DATE      = <span class="string">'^\s*([0-9]*)/?([0-9]*)/?([0-9]*)'</span>
+    RGX_TIME      = <span class="string">'^\s*([0-9]*):?([0-9]*)'</span>
+    RGX_VARNAME   = <span class="string">'(\w+)'</span>
+    RGX_HASID     = <span class="string">'^id(?![a-z])|(?&lt;![A-Z])I[dD]$'</span>
+  <span class="keyword">end</span>
+
+  <span class="comment">%------- Private data</span>
+  <span class="keyword">properties</span> (Access = protected)
+    screenSize                    <span class="comment">% For positioning GUI figures</span>
+    colorID                       <span class="comment">% Colors for identifying various animals</span>
+    sessionForm                   <span class="comment">% Data format and defaults for schedule information</span>
+    mazeForm                      <span class="comment">% Data format and defaults for maze performance</span>
+    behaviorForm                  <span class="comment">% Data format and defaults for daily behavior/performance</span>
+    animalForm                    <span class="comment">% Data format and defaults for animal information</span>
+
+    figGUI                        <span class="comment">% GUI window</span>
+    axsSchedule                   <span class="comment">% Axis for schedule display</span>
+    cntControls                   <span class="comment">% Container for button controls</span>
+    btnAdd                        <span class="comment">% Button to add a new animal</span>
+    btnEdit                       <span class="comment">% Button to edit info for an existing animal</span>
+    btnRemove                     <span class="comment">% Button to remove an existing animal</span>
+    btnSubmit                     <span class="comment">% Button to dismiss GUI and return selected value</span>
+    btnCancel                     <span class="comment">% Button to dismiss GUI with a cancellation</span>
+    cntAnimal                     <span class="comment">% Container for per animal performance display</span>
+    guiAnimal                     <span class="comment">% Display object handles per animal performance</span>
+  <span class="keyword">end</span>
+
+  <span class="comment">%------- Public data</span>
+  <span class="keyword">properties</span> (SetAccess = protected)
+    animal                        <span class="comment">% Animal schedule and performance information</span>
+  <span class="keyword">end</span>
+
+  <span class="comment">%________________________________________________________________________</span>
+  <span class="keyword">methods</span>
+
+    <span class="comment">%----- Structure version for storing</span>
+    <span class="keyword">function</span> frozen = saveobj(obj)
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Constructor</span>
+    <span class="keyword">function</span> obj = TrainingRegiment()
+      <span class="comment">% Formatting</span>
+      obj.screenSize              = get(0, <span class="string">'MonitorPosition'</span>);
+      obj.screenSize              = obj.screenSize(:, 3:4) - obj.screenSize(:, 1:2) + 1;
+      obj.screenSize              = obj.screenSize(obj.MONITOR, :);
+      obj.screenSize              = [1, 500, obj.screenSize - [20 140]];
+      obj.colorID                 = obj.decideColors(9);
+
+      <span class="comment">% Schedule format per day</span>
+      obj.sessionForm.start       = obj.HOURS(1);
+      obj.sessionForm.duration    = 45;
+
+      <span class="comment">% Data collected for each maze session</span>
+      obj.mazeForm.label          = <span class="string">''</span>;
+      obj.mazeForm.dataFile       = {};
+      obj.mazeForm.performance    = nan(size(enumeration(<span class="string">'Choice'</span>)));
+
+      <span class="comment">% Behavior and performance per day</span>
+      obj.behaviorForm.date       = [];
+      obj.behaviorForm.weight     = nan;
+      obj.behaviorForm.maze       = repmat(obj.mazeForm, 0, 0);   <span class="comment">% per session</span>
+
+      <span class="comment">% Animal information format</span>
+      obj.animalForm.id           = <span class="string">''</span>;
+      obj.animalForm.importAge    = <span class="string">'(weeks)'</span>;
+      obj.animalForm.importDate   = [];
+      obj.animalForm.normWeight   = <span class="string">'(grams)'</span>;
+      obj.animalForm.session      = repmat(obj.sessionForm, size(obj.DAYS));
+
+      <span class="comment">% Initialize data</span>
+      obj.animal                  = repmat(obj.animalForm, 0, 0);
+
+      drawGUI(obj);
+    <span class="keyword">end</span>
+
+  <span class="keyword">end</span>
+
+  <span class="comment">%________________________________________________________________________</span>
+  <span class="keyword">methods</span> (Access = protected)
+
+    <span class="comment">%----- Draw GUI on screen and set up action handlers</span>
+    <span class="keyword">function</span> drawGUI(obj)
+
+      <span class="comment">% Create GUI figure on screen (replaces any previous one)</span>
+      <span class="keyword">if</span> ishghandle(obj.figGUI)
+        delete(obj.figGUI);
+      <span class="keyword">end</span>
+      obj.figGUI    = figure( <span class="string">'Name'</span>            , <span class="string">'Animal Training Regiment'</span>            <span class="keyword">...</span>
+                            , <span class="string">'Units'</span>           , <span class="string">'pixels'</span>                              <span class="keyword">...</span>
+                            , <span class="string">'Position'</span>        , obj.computeFigurePos(obj.GUI_SIZE)    <span class="keyword">...</span>
+                            , <span class="string">'Menubar'</span>         , <span class="string">'none'</span>                                <span class="keyword">...</span>
+                            , <span class="string">'NumberTitle'</span>     , <span class="string">'off'</span>                                 <span class="keyword">...</span>
+                            , <span class="string">'Resize'</span>          , <span class="string">'on'</span>                                  <span class="keyword">...</span>
+                            , <span class="string">'Color'</span>           , obj.GUI_COLOR                         <span class="keyword">...</span>
+                            );
+
+      <span class="comment">% Create week schedule display</span>
+      obj.axsSchedule         = axes( <span class="string">'Color'</span>           , <span class="string">'none'</span>                                          <span class="keyword">...</span>
+                                    , <span class="string">'Units'</span>           , <span class="string">'normalized'</span>                                    <span class="keyword">...</span>
+                                    , <span class="string">'Position'</span>        , [0.03 0.35 0.25 0.62]                           <span class="keyword">...</span>
+                                    , <span class="string">'Box'</span>             , <span class="string">'on'</span>                                            <span class="keyword">...</span>
+                                    , <span class="string">'FontSize'</span>        , obj.GUI_FONT                                    <span class="keyword">...</span>
+                                    , <span class="string">'XAxisLocation'</span>   , <span class="string">'top'</span>                                           <span class="keyword">...</span>
+                                    , <span class="string">'XLim'</span>            , [0.5, 0.5+numel(obj.DAYS)]                      <span class="keyword">...</span>
+                                    , <span class="string">'YLim'</span>            , obj.HOURS                                       <span class="keyword">...</span>
+                                    , <span class="string">'YGrid'</span>           , <span class="string">'on'</span>                                            <span class="keyword">...</span>
+                                    , <span class="string">'YDir'</span>            , <span class="string">'reverse'</span>                                       <span class="keyword">...</span>
+                                    , <span class="string">'XTick'</span>           , 1:numel(obj.DAYS)                               <span class="keyword">...</span>
+                                    , <span class="string">'XTickLabel'</span>      , obj.DAYS                                        <span class="keyword">...</span>
+                                    , <span class="string">'YTick'</span>           , obj.HOURS(1):2:obj.HOURS(2)                     <span class="keyword">...</span>
+                                    , <span class="string">'YTickLabel'</span>      , arrayfun( @(x) sprintf(<span class="string">'%02d:00'</span>,mod(x-1,24)+1) <span class="keyword">...</span>
+                                                                  , obj.HOURS(1):2:obj.HOURS(2)           <span class="keyword">...</span>
+                                                                  , <span class="string">'UniformOutput'</span>, false                <span class="keyword">...</span>
+                                                                  )                                       <span class="keyword">...</span>
+                                    );
+
+      <span class="comment">% Create session and performance display per animal</span>
+      obj.cntAnimal           = uigridcontainer ( <span class="string">'v0'</span>                                                    <span class="keyword">...</span>
+                                                , <span class="string">'Units'</span>               , <span class="string">'normalized'</span>                    <span class="keyword">...</span>
+                                                , <span class="string">'Position'</span>            , [0.3 0 0.7 1]                   <span class="keyword">...</span>
+                                                , <span class="string">'EliminateEmptySpace'</span> , <span class="string">'off'</span>                           <span class="keyword">...</span>
+                                                , <span class="string">'GridSize'</span>            , [size(obj.colorID,1) 1]         <span class="keyword">...</span>
+                                                );
+      <span class="keyword">for</span> iAni = numel(obj.animal):-1:1
+        obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+      <span class="keyword">end</span>
+
+      <span class="comment">% Create action buttons</span>
+      obj.cntControls         = uiflowcontainer ( <span class="string">'v0'</span>                                                    <span class="keyword">...</span>
+                                                , <span class="string">'Units'</span>         , <span class="string">'normalized'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'Position'</span>      , [0.05 0.02 0.2 0.3]                   <span class="keyword">...</span>
+                                                , <span class="string">'FlowDirection'</span> , <span class="string">'TopDown'</span>                             <span class="keyword">...</span>
+                                                );
+      obj.btnAdd              = uicontrol       ( <span class="string">'Parent'</span>        , obj.cntControls                       <span class="keyword">...</span>
+                                                , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'String'</span>        , <span class="string">'Add animal'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                      <span class="keyword">...</span>
+                                                , <span class="string">'Callback'</span>      , @obj.fcnAddAnimal                     <span class="keyword">...</span>
+                                                , <span class="string">'KeyPressFcn'</span>   , {@obj.buttonKeypress, obj.btnSubmit}  <span class="keyword">...</span>
+                                                );
+      obj.btnEdit             = uicontrol       ( <span class="string">'Parent'</span>        , obj.cntControls                       <span class="keyword">...</span>
+                                                , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'String'</span>        , <span class="string">'Edit ...'</span>                            <span class="keyword">...</span>
+                                                , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                      <span class="keyword">...</span>
+                                                , <span class="string">'Enable'</span>        , <span class="string">'off'</span>                                 <span class="keyword">...</span>
+                                                , <span class="string">'Callback'</span>      , @obj.fcnAddAnimal                     <span class="keyword">...</span>
+                                                , <span class="string">'KeyPressFcn'</span>   , {@obj.buttonKeypress, obj.btnSubmit}  <span class="keyword">...</span>
+                                                );
+      obj.btnRemove           = uicontrol       ( <span class="string">'Parent'</span>        , obj.cntControls                       <span class="keyword">...</span>
+                                                , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'String'</span>        , <span class="string">'Remove ...'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                      <span class="keyword">...</span>
+                                                , <span class="string">'Enable'</span>        , <span class="string">'off'</span>                                 <span class="keyword">...</span>
+                                                , <span class="string">'Callback'</span>      , @obj.fcnAddAnimal                     <span class="keyword">...</span>
+                                                , <span class="string">'KeyPressFcn'</span>   , {@obj.buttonKeypress, obj.btnSubmit}  <span class="keyword">...</span>
+                                                );
+      obj.btnSubmit           = uicontrol       ( <span class="string">'Parent'</span>        , obj.cntControls                       <span class="keyword">...</span>
+                                                , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'String'</span>        , <span class="string">'( Select an animal )'</span>                <span class="keyword">...</span>
+                                                , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                      <span class="keyword">...</span>
+                                                , <span class="string">'Enable'</span>        , <span class="string">'off'</span>                                 <span class="keyword">...</span>
+                                                , <span class="string">'Callback'</span>      , @obj.fcnSubmit                        <span class="keyword">...</span>
+                                                , <span class="string">'KeyPressFcn'</span>   , @obj.buttonKeypress                   <span class="keyword">...</span>
+                                                );
+      obj.btnCancel           = uicontrol       ( <span class="string">'Parent'</span>        , obj.cntControls                       <span class="keyword">...</span>
+                                                , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                          <span class="keyword">...</span>
+                                                , <span class="string">'String'</span>        , <span class="string">'Cancel'</span>                              <span class="keyword">...</span>
+                                                , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                      <span class="keyword">...</span>
+                                                , <span class="string">'Callback'</span>      , @obj.fcnCancel                        <span class="keyword">...</span>
+                                                , <span class="string">'KeyPressFcn'</span>   , @obj.buttonKeypress                   <span class="keyword">...</span>
+                                                );
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Draws session and performance info for the given animal</span>
+    <span class="keyword">function</span> drawAnimalInfo(obj, iAni, hSchedule, hContainer)
+
+      <span class="comment">% Extend capacity of display if necessary</span>
+      <span class="keyword">if</span> iAni &gt; size(obj.colorID, 1)
+        obj.colorID         = obj.decideColors(iAni);
+        set ( obj.cntAnimal                             <span class="keyword">...</span>
+            , <span class="string">'GridSize'</span>    , [size(obj.colorID,1) 1]   <span class="keyword">...</span>
+            );
+      <span class="keyword">end</span>
+
+      <span class="comment">% Animal specific variables for convenience</span>
+      info                  = obj.animal(iAni);
+      color                 = obj.colorID(iAni,:);
+
+      <span class="comment">% Create new graphics objects if this is a new animal</span>
+      <span class="keyword">if</span> iAni &gt; numel(obj.guiAnimal) || isempty(obj.guiAnimal(iAni).session)
+        <span class="comment">% Session time rectangles</span>
+        <span class="keyword">for</span> iDay = numel(obj.DAYS):-1:1
+          obj.guiAnimal(iAni).session(iDay)                                               <span class="keyword">...</span>
+                            = rectangle ( <span class="string">'Parent'</span>    , hSchedule                         <span class="keyword">...</span>
+                                        , <span class="string">'FaceColor'</span> , color                             <span class="keyword">...</span>
+                                        , <span class="string">'EdgeColor'</span> , [1 1 1]                           <span class="keyword">...</span>
+                                        , <span class="string">'LineWidth'</span> , 2                                 <span class="keyword">...</span>
+                                        );
+          obj.guiAnimal(iAni).label(iDay)                                                 <span class="keyword">...</span>
+                            = text      ( <span class="string">'String'</span>                , info.id               <span class="keyword">...</span>
+                                        , <span class="string">'Parent'</span>                , hSchedule             <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>              , obj.GUI_FONT - 1      <span class="keyword">...</span>
+                                        , <span class="string">'FontWeight'</span>            , <span class="string">'bold'</span>                <span class="keyword">...</span>
+                                        , <span class="string">'VerticalAlignment'</span>     , <span class="string">'middle'</span>              <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span>   , <span class="string">'center'</span>              <span class="keyword">...</span>
+                                        );
+        <span class="keyword">end</span>
+
+        <span class="comment">% Label for animal ID and possibly other information</span>
+        obj.guiAnimal(iAni).panel                                                         <span class="keyword">...</span>
+                            = uipanel   ( <span class="string">'Parent'</span>          , hContainer                  <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span> , obj.GUI_COLOR               <span class="keyword">...</span>
+                                        , <span class="string">'BorderType'</span>      , <span class="string">'none'</span>                      <span class="keyword">...</span>
+                                        , <span class="string">'ButtonDownFcn'</span>   , {@obj.fcnSelectAnimal,iAni} <span class="keyword">...</span>
+                                        );
+
+        <span class="comment">% Axes for animal performance display</span>
+        obj.guiAnimal(iAni).axsPerformance                                                <span class="keyword">...</span>
+                            = axes( <span class="string">'Parent'</span>          , obj.guiAnimal(iAni).panel         <span class="keyword">...</span>
+                                  , <span class="string">'Units'</span>           , <span class="string">'normalized'</span>                      <span class="keyword">...</span>
+                                  , <span class="string">'Position'</span>        , [0.05 0.4 0.94 0.55]              <span class="keyword">...</span>
+                                  , <span class="string">'Color'</span>           , [1 1 1]                           <span class="keyword">...</span>
+                                  , <span class="string">'FontSize'</span>        , obj.GUI_FONT - 2                  <span class="keyword">...</span>
+                                  , <span class="string">'YLim'</span>            , [-0.1 1.1]                        <span class="keyword">...</span>
+                                  , <span class="string">'Box'</span>             , <span class="string">'on'</span>                              <span class="keyword">...</span>
+                                  , <span class="string">'ButtonDownFcn'</span>   , {@obj.fcnSelectAnimal,iAni}       <span class="keyword">...</span>
+                                  );
+        xlabel(<span class="string">'Session'</span>);
+        ylabel(<span class="string">'Correct'</span>);
+
+        <span class="comment">% Performance plot lines</span>
+        <span class="keyword">for</span> iChoice = 1:numel(obj.CHOICES)
+          obj.guiAnimal(iAni).performance(iChoice)                                        <span class="keyword">...</span>
+                            = line( <span class="string">'XData'</span>           , []                                <span class="keyword">...</span>
+                                  , <span class="string">'YData'</span>           , []                                <span class="keyword">...</span>
+                                  , <span class="string">'LineStyle'</span>       , <span class="string">'none'</span>                            <span class="keyword">...</span>
+                                  , <span class="string">'Color'</span>           , obj.CHOICE_COLOR(iChoice, :)      <span class="keyword">...</span>
+                                  , <span class="string">'Marker'</span>          , obj.CHOICE_MARKER{iChoice}        <span class="keyword">...</span>
+                                  , <span class="string">'MarkerSize'</span>      , 5                                 <span class="keyword">...</span>
+                                  , <span class="string">'MarkerFaceColor'</span> , obj.CHOICE_COLOR(iChoice, :)      <span class="keyword">...</span>
+                                  , <span class="string">'MarkerEdgeColor'</span> , <span class="string">'none'</span>                            <span class="keyword">...</span>
+                                  );
+        <span class="keyword">end</span>
+
+        <span class="comment">% Legend</span>
+        obj.guiAnimal(iAni).legend                                              <span class="keyword">...</span>
+                            = legend( obj.guiAnimal(iAni).performance           <span class="keyword">...</span>
+                                    , obj.CHOICE_NAME                           <span class="keyword">...</span>
+                                    , <span class="string">'Location'</span>      , <span class="string">'SouthEastOutside'</span>      <span class="keyword">...</span>
+                                    );
+        obj.guiAnimal(iAni).title                                               <span class="keyword">...</span>
+                            = ltitle( obj.guiAnimal(iAni).legend, info.id       <span class="keyword">...</span>
+                                    , <span class="string">'FontSize'</span>                , obj.GUI_FONT  <span class="keyword">...</span>
+                                    );
+
+        <span class="comment">% Other information that will be added on demand</span>
+
+      <span class="keyword">end</span>
+
+
+      <span class="comment">% Set position of session time rectangles and labels</span>
+      <span class="keyword">for</span> iDay = 1:numel(obj.DAYS)
+        set ( obj.guiAnimal(iAni).session(iDay)               <span class="keyword">...</span>
+            , <span class="string">'Position'</span>  , [ iDay - 0.5                      <span class="keyword">...</span>
+                            , info.session(iDay).start        <span class="keyword">...</span>
+                            , 1                               <span class="keyword">...</span>
+                            , info.session(iDay).duration/60  <span class="keyword">...</span>
+                            ]                                 <span class="keyword">...</span>
+            );
+        set ( obj.guiAnimal(iAni).label(iDay)                                               <span class="keyword">...</span>
+            , <span class="string">'Position'</span>  , [ iDay                                                          <span class="keyword">...</span>
+                            , info.session(iDay).start + info.session(iDay).duration/60/2   <span class="keyword">...</span>
+                            ]                                                               <span class="keyword">...</span>
+            );
+      <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Modal dialog box for animal information</span>
+    <span class="keyword">function</span> info = dialogEditAnimal(obj, info)
+
+      animalData    = setdiff( fieldnames(info)', <span class="string">'session'</span> );
+
+
+      <span class="comment">% Setup dialog box window</span>
+      hDialog       = figure( <span class="string">'Name'</span>            , <span class="string">'Training Schedule'</span>                   <span class="keyword">...</span>
+                            , <span class="string">'Units'</span>           , <span class="string">'pixels'</span>                              <span class="keyword">...</span>
+                            , <span class="string">'Position'</span>        , obj.computeFigurePos([0.4 0.3])       <span class="keyword">...</span>
+                            , <span class="string">'Menubar'</span>         , <span class="string">'none'</span>                                <span class="keyword">...</span>
+                            , <span class="string">'NumberTitle'</span>     , <span class="string">'off'</span>                                 <span class="keyword">...</span>
+                            , <span class="string">'Resize'</span>          , <span class="string">'on'</span>                                  <span class="keyword">...</span>
+                            , <span class="string">'Color'</span>           , obj.GUI_COLOR                         <span class="keyword">...</span>
+                            , <span class="string">'WindowStyle'</span>     , <span class="string">'modal'</span>                               <span class="keyword">...</span>
+                            );
+      cData         = uigridcontainer ( <span class="string">'v0'</span>                                            <span class="keyword">...</span>
+                                      , <span class="string">'Units'</span>               , <span class="string">'normalized'</span>            <span class="keyword">...</span>
+                                      , <span class="string">'Position'</span>            , [0.02 0.22 0.4 0.76]    <span class="keyword">...</span>
+                                      , <span class="string">'EliminateEmptySpace'</span> , <span class="string">'off'</span>                   <span class="keyword">...</span>
+                                      , <span class="string">'GridSize'</span>            , [numel(animalData),2]   <span class="keyword">...</span>
+                                      , <span class="string">'HorizontalWeight'</span>    , [2, 3]                  <span class="keyword">...</span>
+                                      );
+      cSchedule     = uigridcontainer ( <span class="string">'v0'</span>                                            <span class="keyword">...</span>
+                                      , <span class="string">'Units'</span>               , <span class="string">'normalized'</span>            <span class="keyword">...</span>
+                                      , <span class="string">'Position'</span>            , [0.44 0.02 0.55 0.96]   <span class="keyword">...</span>
+                                      , <span class="string">'GridSize'</span>            , [numel(obj.DAYS)+1,4]   <span class="keyword">...</span>
+                                      , <span class="string">'HorizontalWeight'</span>    , [2, 4, 3, 1]            <span class="keyword">...</span>
+                                      );
+      cAction       = uiflowcontainer ( <span class="string">'v0'</span>                                            <span class="keyword">...</span>
+                                      , <span class="string">'Units'</span>               , <span class="string">'normalized'</span>            <span class="keyword">...</span>
+                                      , <span class="string">'Position'</span>            , [0.02 0.02 0.4 0.15]    <span class="keyword">...</span>
+                                      , <span class="string">'FlowDirection'</span>       , <span class="string">'LeftToRight'</span>           <span class="keyword">...</span>
+                                      );
+
+      <span class="comment">% Create action buttons</span>
+      hSubmit               = uicontrol ( <span class="string">'Parent'</span>        , cAction                         <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>        , <span class="string">'Submit'</span>                        <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                <span class="keyword">...</span>
+                                        , <span class="string">'Callback'</span>      , @obj.fcnSubmit                  <span class="keyword">...</span>
+                                        , <span class="string">'KeyPressFcn'</span>   , @obj.buttonKeypress             <span class="keyword">...</span>
+                                        );
+      hCancel               = uicontrol ( <span class="string">'Parent'</span>        , cAction                         <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>         , <span class="string">'pushbutton'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>        , <span class="string">'Cancel'</span>                        <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>      , obj.GUI_FONT + 2                <span class="keyword">...</span>
+                                        , <span class="string">'Callback'</span>      , @obj.fcnCancel                  <span class="keyword">...</span>
+                                        , <span class="string">'KeyPressFcn'</span>   , {@obj.buttonKeypress, hSubmit}  <span class="keyword">...</span>
+                                        );
+
+      <span class="comment">% Create input fields populated with default values</span>
+      hInput        = [];
+      <span class="keyword">for</span> iData = 1:numel(animalData)
+        hInput(1, iData)    = uicontrol ( <span class="string">'Parent'</span>              , cData                     <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , [animalData{iData} <span class="string">' = '</span>] <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'Enable'</span>              , <span class="string">'inactive'</span>                <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , obj.GUI_COLOR             <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'right'</span>                   <span class="keyword">...</span>
+                                        );
+        hInput(2, iData)    = uicontrol ( <span class="string">'Parent'</span>              , cData                     <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , num2str(info.(animalData{iData}))       <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , [1 1 1]                   <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'left'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'Callback'</span>            , obj.deduceValidator(animalData{iData})  <span class="keyword">...</span>
+                                        , <span class="string">'KeyPressFcn'</span>         , {@obj.dispatchKeypress, hSubmit}        <span class="keyword">...</span>
+                                        );
+      <span class="keyword">end</span>
+
+      <span class="comment">% Create session time entry list</span>
+      headers               = {<span class="string">''</span>, <span class="string">'Start (hh:mm)'</span>, <span class="string">'Duration (min)'</span>, <span class="string">''</span>};
+      <span class="keyword">for</span> iHead = 1:numel(headers)
+        hSchedule(iHead,1)  = uicontrol ( <span class="string">'Parent'</span>              , cSchedule                 <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , headers{iHead}            <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'Enable'</span>              , <span class="string">'inactive'</span>                <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , obj.GUI_COLOR             <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'center'</span>                  <span class="keyword">...</span>
+                                        );
+        <span class="keyword">if</span> isempty(headers{iHead})
+          set(hSchedule(iHead,1), <span class="string">'Style'</span>, <span class="string">'text'</span>);
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+
+      <span class="keyword">for</span> iDay = 1:numel(obj.DAYS)
+        hSchedule(1,iDay+1) = uicontrol ( <span class="string">'Parent'</span>              , cSchedule                 <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , obj.DAYS{iDay}            <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'Enable'</span>              , <span class="string">'inactive'</span>                <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , obj.GUI_COLOR             <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'center'</span>                  <span class="keyword">...</span>
+                                        );
+        hSchedule(2,iDay+1) = uicontrol ( <span class="string">'Parent'</span>              , cSchedule                 <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , time2str(info.session(iDay).start)    <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , [1 1 1]                   <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'center'</span>                  <span class="keyword">...</span>
+                                        , <span class="string">'Callback'</span>            , @obj.validateTime         <span class="keyword">...</span>
+                                        , <span class="string">'KeyPressFcn'</span>         , {@obj.dispatchKeypress, hSubmit}      <span class="keyword">...</span>
+                                        );
+        hSchedule(3,iDay+1) = uicontrol ( <span class="string">'Parent'</span>              , cSchedule                 <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'edit'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , num2str(info.session(iDay).duration)  <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT              <span class="keyword">...</span>
+                                        , <span class="string">'BackgroundColor'</span>     , [1 1 1]                   <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'center'</span>                  <span class="keyword">...</span>
+                                        );
+        hSchedule(4,iDay+1) = uicontrol ( <span class="string">'Parent'</span>              , cSchedule                 <span class="keyword">...</span>
+                                        , <span class="string">'Style'</span>               , <span class="string">'pushbutton'</span>              <span class="keyword">...</span>
+                                        , <span class="string">'String'</span>              , <span class="string">'*'</span>                       <span class="keyword">...</span>
+                                        , <span class="string">'FontSize'</span>            , obj.GUI_FONT + 4          <span class="keyword">...</span>
+                                        , <span class="string">'FontWeight'</span>          , <span class="string">'bold'</span>                    <span class="keyword">...</span>
+                                        , <span class="string">'HorizontalAlignment'</span> , <span class="string">'center'</span>                  <span class="keyword">...</span>
+                                        , <span class="string">'KeyPressFcn'</span>         , {@obj.buttonKeypress, hSubmit}        <span class="keyword">...</span>
+                                        );
+      <span class="keyword">end</span>
+
+      <span class="comment">% The callback needs to be set after all controls have been made</span>
+      <span class="keyword">for</span> iDay = 1:numel(obj.DAYS)
+        set(hSchedule(4,iDay+1), <span class="string">'Callback'</span>, {@obj.copyInput, hSchedule(2:3,iDay+1), hSchedule(2:3,[2:iDay, iDay+2:end])});
+      <span class="keyword">end</span>
+
+
+      <span class="comment">% Focus on default object and wait until user is done</span>
+      get(hSubmit, <span class="string">'UserData'</span>)
+      uicontrol(hInput(2,1));
+      uiwait(hDialog);
+
+      <span class="comment">% Retrieve results and close dialog box (if it still exists)</span>
+      <span class="keyword">if</span> ~ishghandle(hDialog)
+        <span class="keyword">return</span>;
+      <span class="keyword">end</span>
+
+      get(hSubmit, <span class="string">'UserData'</span>)
+      <span class="keyword">if</span> get(hSubmit, <span class="string">'UserData'</span>) == true
+        <span class="keyword">for</span> iData = 1:numel(animalData)
+          info.(animalData{iData})      = obj.deduceData(animalData{iData}, hInput(2,iData));
+        <span class="keyword">end</span>
+        <span class="keyword">for</span> iDay = 1:numel(obj.DAYS)
+          info.session(iDay).start      = obj.deduceData(<span class="string">'time'</span>, hSchedule(2,iDay+1));
+          info.session(iDay).duration   = obj.deduceData(<span class="string">''</span>    , hSchedule(3,iDay+1));
+        <span class="keyword">end</span>
+      <span class="keyword">else</span>
+        info  = [];
+      <span class="keyword">end</span>
+
+      close(hDialog);
+
+    <span class="keyword">end</span>
+
+
+    <span class="comment">%----- Callback for selecting an existing animal</span>
+    <span class="keyword">function</span> [] = fcnSelectAnimal(obj, handle, event, iAni)
+
+      <span class="comment">% Turn off previous highlights</span>
+      set([obj.guiAnimal.panel], <span class="string">'BackgroundColor'</span>, obj.GUI_COLOR);
+      set([obj.guiAnimal.title], <span class="string">'Color'</span>          , [0 0 0]);
+
+      <span class="comment">% Color the selected panel</span>
+      set(obj.guiAnimal(iAni).panel, <span class="string">'BackgroundColor'</span>, obj.colorID(iAni,:));
+      set(obj.guiAnimal(iAni).title, <span class="string">'Color'</span>          , [1 1 1]);
+
+      <span class="comment">% Set selection data for action buttons</span>
+      actions     = [obj.btnEdit, obj.btnRemove, obj.btnSubmit];
+      set(actions       , <span class="string">'Enable'</span>    , <span class="string">'on'</span>, <span class="string">'UserData'</span>, iAni);
+      set(obj.btnEdit   , <span class="string">'String'</span>    , [<span class="string">'Edit '</span> obj.animal(iAni).id]);
+      set(obj.btnRemove , <span class="string">'String'</span>    , [<span class="string">'Remove '</span> obj.animal(iAni).id]);
+      set(obj.btnSubmit , <span class="string">'String'</span>    , [<span class="string">'START training '</span> obj.animal(iAni).id] <span class="keyword">...</span>
+                        , <span class="string">'FontWeight'</span>, <span class="string">'bold'</span>                                  <span class="keyword">...</span>
+                        );
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Callback for adding an animal to the schedule</span>
+    <span class="keyword">function</span> [] = fcnAddAnimal(obj, handle, event)
+
+      <span class="comment">% Obtain user input for animal data</span>
+      info  = obj.dialogEditAnimal(obj.animalForm);
+      <span class="keyword">if</span> isempty(info)
+        <span class="keyword">return</span>;
+      <span class="keyword">end</span>
+
+      iAni              = numel(obj.animal) + 1;
+      obj.animal(iAni)  = info;
+      obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Callback for editing info for an existing animal</span>
+    <span class="keyword">function</span> [] = fcnEditAnimal(obj, handle, event)
+
+      <span class="comment">% Obtain user input for animal data</span>
+      iAni  = get(handle, <span class="string">'UserData'</span>);
+      info  = obj.dialogEditAnimal(obj.animal(iAni));
+      <span class="keyword">if</span> isempty(info)
+        <span class="keyword">return</span>;
+      <span class="keyword">end</span>
+
+      obj.animal(iAni)  = info;
+      obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Callback</span>
+    <span class="keyword">function</span> [] = fcnRemoveAnimal(obj, handle, event, index)
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Computes a central position for a figure of the given size</span>
+    <span class="keyword">function</span> position = computeFigurePos(obj, figureSize)
+
+      <span class="keyword">if</span> numel(figureSize) == 1
+        figureSize  = floor(figureSize * obj.screenSize(3:4));
+      <span class="keyword">elseif</span> all(figureSize &lt;= 1)
+        figureSize  = floor(figureSize .* obj.screenSize(3:4));
+      <span class="keyword">end</span>
+      border        = round( (obj.screenSize(3:4) - figureSize) / 2 );
+      position      = [obj.screenSize(1:2) + border, figureSize];
+
+    <span class="keyword">end</span>
+
+
+<span class="comment">%     %-----</span>
+<span class="comment">%     function [] = ()</span>
+<span class="comment">%     end</span>
+
+  <span class="keyword">end</span>
+
+  <span class="comment">%________________________________________________________________________</span>
+  <span class="keyword">methods</span> (Static)
+
+    <span class="comment">%----- Decides on colors for each animal</span>
+    <span class="keyword">function</span> colors = decideColors(maxAnimals)
+
+      <span class="keyword">if</span> maxAnimals &lt;= 9
+        colors  = linspecer(9 , <span class="string">'qualitative'</span>);
+      <span class="keyword">elseif</span> maxAnimals &lt;= 12
+        colors  = linspecer(12, <span class="string">'qualitative'</span>);
+      <span class="keyword">else</span>
+        colors  = linspecer(maxAnimals);
+      <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to check for printable characters</span>
+    <span class="keyword">function</span> yes = isPrintable(character)
+      yes   = ( ~isempty(character) &amp;&amp; character &gt; 31 &amp;&amp; character &lt; 127 );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to obtain numeric input with optional postfix</span>
+    <span class="keyword">function</span> value = getNumber(str, postfix)
+      number  = regexp( str, TrainingRegiment.RGX_NUMBER, <span class="string">'tokens'</span>, <span class="string">'once'</span> );
+      <span class="keyword">if</span> isempty(number)
+        value = <span class="string">''</span>;
+      <span class="keyword">elseif</span> nargin &gt; 1
+        value = strcat(number{1}, postfix);
+      <span class="keyword">else</span>
+        value = number{1};
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to ensure proper Matlab-compatible variable name</span>
+    <span class="keyword">function</span> validateIdentifier(handle, event)
+      input   = regexp(get(handle, <span class="string">'String'</span>), TrainingRegiment.RGX_VARNAME, <span class="string">'tokens'</span>);
+      <span class="keyword">if</span> isempty(input)
+        input = <span class="string">''</span>;
+      <span class="keyword">else</span>
+        input = strcat(input{:});
+        input = input{:};
+      <span class="keyword">end</span>
+
+      <span class="keyword">if</span> isempty(input) || ~isletter(input(1))
+        input = strcat(TrainingRegiment.DEFAULT_ID, input);
+      <span class="keyword">end</span>
+
+      set( handle, <span class="string">'String'</span>, input );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to ensure proper age entry (in weeks)</span>
+    <span class="keyword">function</span> validateAge(handle, event)
+      set( handle, <span class="string">'String'</span>, TrainingRegiment.getNumber(get(handle, <span class="string">'String'</span>), <span class="string">' week(s)'</span>) );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to ensure proper weight entry (in grams)</span>
+    <span class="keyword">function</span> validateWeight(handle, event)
+      set( handle, <span class="string">'String'</span>, TrainingRegiment.getNumber(get(handle, <span class="string">'String'</span>), <span class="string">' gram(s)'</span>) );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to ensure proper date entry</span>
+    <span class="keyword">function</span> validateDate(handle, event)
+      input       = regexp(get(handle, <span class="string">'String'</span>), TrainingRegiment.RGX_DATE, <span class="string">'tokens'</span>, <span class="string">'once'</span>);
+      ref         = clock;
+      <span class="keyword">if</span> isempty(input)
+        input     = {ref(2), ref(3), ref(1)};
+      <span class="keyword">else</span>
+        input     = { max(min( str2double(input{1}) , 12 ), 1)  <span class="keyword">...</span>
+                    , max(min( str2double(input{2}) , 31 ), 1)  <span class="keyword">...</span>
+                    ,     min( str2double(input{3}) , ref(1) )  <span class="keyword">...</span>
+                    };
+      <span class="keyword">end</span>
+      <span class="keyword">if</span> log10(input{3}) &lt; 2
+        input{3}  = floor(ref(1)/100) * 100 + input{3};
+      <span class="keyword">end</span>
+
+      set( handle, <span class="string">'String'</span>, sprintf(<span class="string">'%d/%d/%d'</span>, input{:}) );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to ensure proper time entry</span>
+    <span class="keyword">function</span> validateTime(handle, event)
+      input       = regexp(get(handle, <span class="string">'String'</span>), TrainingRegiment.RGX_TIME, <span class="string">'tokens'</span>, <span class="string">'once'</span>);
+      <span class="keyword">if</span> isempty(input)
+        ref       = clock;
+        input     = {ref(4), ref(5)};
+      <span class="keyword">else</span>
+        input     = { min(max( str2double(input{1}) , TrainingRegiment.HOURS(1) ), TrainingRegiment.HOURS(2))  <span class="keyword">...</span>
+                    , min(max( str2double(input{2}) , 0 ), 59)  <span class="keyword">...</span>
+                    };
+      <span class="keyword">end</span>
+
+      set( handle, <span class="string">'String'</span>, sprintf(<span class="string">'%02d:%02d'</span>, input{:}) );
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to copy user input from one control to others</span>
+    <span class="keyword">function</span> copyInput(handle, event, source, target)
+      <span class="keyword">if</span> size(source, 1) &gt; 1
+        <span class="keyword">for</span> row = 1:size(source, 1)
+          set(target(row,:), <span class="string">'String'</span>, get(source(row,:), <span class="string">'String'</span>));
+        <span class="keyword">end</span>
+      <span class="keyword">else</span>
+        <span class="keyword">for</span> col = 1:size(source, 2)
+          set(target(:,col), <span class="string">'String'</span>, get(source(:,col), <span class="string">'String'</span>));
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to allow keys to push buttons</span>
+    <span class="keyword">function</span> buttonKeypress(handle, event, submitter)
+      <span class="comment">% Allow Enter to press buttons</span>
+      <span class="keyword">if</span> strcmpi(event.Key, <span class="string">'return'</span>)
+        <span class="keyword">if</span> isempty(event.Modifier)
+          fcn   = get(handle, <span class="string">'Callback'</span>);
+          <span class="keyword">if</span> iscell(fcn)
+            fcn{1}(handle, event, fcn{2:end});
+          <span class="keyword">elseif</span> ~isempty(fcn)
+            fcn(handle, event);
+          <span class="keyword">end</span>
+
+        <span class="comment">% Allow alt+Enter to jump to submit button</span>
+        <span class="keyword">elseif</span> nargin &gt; 2 &amp;&amp; strcmpi(event.Modifier, <span class="string">'alt'</span>)
+          uicontrol(submitter);
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to commit/dismiss dialogs</span>
+    <span class="keyword">function</span> dispatchKeypress(handle, event, submitter)
+      <span class="comment">% Allow alt+Enter to jump to submit button</span>
+      <span class="keyword">if</span> strcmpi(event.Key, <span class="string">'return'</span>) &amp;&amp; strcmpi(event.Modifier, <span class="string">'alt'</span>)
+        uicontrol(submitter);
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to select an appropriate validation callback</span>
+    <span class="keyword">function</span> fcn = deduceValidator(name)
+      <span class="keyword">if</span> ~isempty(regexpi(name, <span class="string">'age'</span>, <span class="string">'once'</span>))
+        fcn   = @TrainingRegiment.validateAge;
+      <span class="keyword">elseif</span> ~isempty(regexpi(name, <span class="string">'date'</span>, <span class="string">'once'</span>))
+        fcn   = @TrainingRegiment.validateDate;
+      <span class="keyword">elseif</span> ~isempty(regexpi(name, <span class="string">'weight'</span>, <span class="string">'once'</span>))
+        fcn   = @TrainingRegiment.validateWeight;
+      <span class="keyword">elseif</span> ~isempty(regexp(name, TrainingRegiment.RGX_HASID, <span class="string">'once'</span>))
+        fcn   = @TrainingRegiment.validateIdentifier;
+      <span class="keyword">else</span>
+        fcn   = <span class="string">''</span>;
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Helper function to convert validated data to recorded values</span>
+    <span class="keyword">function</span> data = deduceData(name, handle)
+      value     = get(handle, <span class="string">'String'</span>);
+
+      <span class="keyword">if</span> ~isempty(regexpi(name, <span class="string">'date'</span>, <span class="string">'once'</span>))
+        input   = regexp(value, TrainingRegiment.RGX_DATE, <span class="string">'tokens'</span>, <span class="string">'once'</span>);
+        <span class="keyword">if</span> isempty(input)
+          data  = <span class="string">''</span>;
+        <span class="keyword">else</span>
+          data  = [str2double(input{3}), str2double(input{1}), str2double(input{2})];
+        <span class="keyword">end</span>
+      <span class="keyword">elseif</span> ~isempty(regexp(name, TrainingRegiment.RGX_HASID, <span class="string">'once'</span>))
+        data    = value;
+      <span class="keyword">else</span>
+        data    = str2double( TrainingRegiment.getNumber(value) );
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+    <span class="comment">%----- Callback that flags user interaction as successful</span>
+    <span class="keyword">function</span> fcnSubmit(handle, event)
+      set(handle, <span class="string">'UserData'</span>, true);
+      uiresume(gcbf);
+    <span class="keyword">end</span>
+
+    <span class="comment">%----- Callback that exits without success</span>
+    <span class="keyword">function</span> fcnCancel(handle, event)
+      uiresume(gcbf);
+    <span class="keyword">end</span>
+
+
+  <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.12<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef TrainingRegiment < handle
+
+  %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Constants
+  properties (Constant)
+    DEFAULT_ID    = 'k'
+    WEIGHT_RANGE  = [10 30]
+    
+    DAYS          = {'Mon', 'Tue', 'Wed', 'Thu', 'Fri'}
+    HOURS         = [8 26]          % Min/max hour of the day
+    GUI_SIZE      = 0.9
+    GUI_COLOR     = [1 1 1] * 0.905
+    GUI_FONT      = 11
+    MONITOR       = 1
+    CHOICES       = Choice.all()
+    CHOICE_NAME   = arrayfun(@char, Choice.all(), 'UniformOutput', false)
+  	CHOICE_COLOR  = [138 163 49; 119 157 191] / 255
+    CHOICE_MARKER = {'<', '>'}
+    
+    RGX_NUMBER    = '^\s*([+-]?\s*[0-9]*[.]?[0-9]*)'
+    RGX_DATE      = '^\s*([0-9]*)/?([0-9]*)/?([0-9]*)'
+    RGX_TIME      = '^\s*([0-9]*):?([0-9]*)'
+    RGX_VARNAME   = '(\w+)'
+    RGX_HASID     = '^id(?![a-z])|(?<![A-Z])I[dD]$'
+  end
+  
+  %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Private data
+  properties (Access = protected)
+    screenSize                    % For positioning GUI figures
+    colorID                       % Colors for identifying various animals
+    sessionForm                   % Data format and defaults for schedule information
+    mazeForm                      % Data format and defaults for maze performance
+    behaviorForm                  % Data format and defaults for daily behavior/performance
+    animalForm                    % Data format and defaults for animal information
+    
+    figGUI                        % GUI window
+    axsSchedule                   % Axis for schedule display
+    cntControls                   % Container for button controls
+    btnAdd                        % Button to add a new animal
+    btnEdit                       % Button to edit info for an existing animal
+    btnRemove                     % Button to remove an existing animal
+    btnSubmit                     % Button to dismiss GUI and return selected value
+    btnCancel                     % Button to dismiss GUI with a cancellation
+    cntAnimal                     % Container for per animal performance display
+    guiAnimal                     % Display object handles per animal performance
+  end
+  
+  %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Public data
+  properties (SetAccess = protected)
+    animal                        % Animal schedule and performance information
+  end
+
+  %________________________________________________________________________
+  methods
+
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Structure version for storing
+    function frozen = saveobj(obj)
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Constructor
+    function obj = TrainingRegiment()
+      % Formatting
+      obj.screenSize              = get(0, 'MonitorPosition');
+      obj.screenSize              = obj.screenSize(:, 3:4) - obj.screenSize(:, 1:2) + 1;
+      obj.screenSize              = obj.screenSize(obj.MONITOR, :);
+      obj.screenSize              = [1, 500, obj.screenSize - [20 140]];
+      obj.colorID                 = obj.decideColors(9);
+      
+      % Schedule format per day
+      obj.sessionForm.start       = obj.HOURS(1);
+      obj.sessionForm.duration    = 45;
+      
+      % Data collected for each maze session
+      obj.mazeForm.label          = '';
+      obj.mazeForm.dataFile       = {};
+      obj.mazeForm.performance    = nan(size(enumeration('Choice')));
+      
+      % Behavior and performance per day
+      obj.behaviorForm.date       = [];
+      obj.behaviorForm.weight     = nan;
+      obj.behaviorForm.maze       = repmat(obj.mazeForm, 0, 0);   % per session
+      
+      % Animal information format
+      obj.animalForm.id           = '';
+      obj.animalForm.importAge    = '(weeks)';
+      obj.animalForm.importDate   = [];
+      obj.animalForm.normWeight   = '(grams)';
+      obj.animalForm.session      = repmat(obj.sessionForm, size(obj.DAYS));
+
+      % Initialize data
+      obj.animal                  = repmat(obj.animalForm, 0, 0);
+      
+      drawGUI(obj);
+    end
+    
+  end
+  
+  %________________________________________________________________________
+  methods (Access = protected)
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Draw GUI on screen and set up action handlers
+    function drawGUI(obj)
+      
+      % Create GUI figure on screen (replaces any previous one)
+      if ishghandle(obj.figGUI)
+        delete(obj.figGUI);
+      end
+      obj.figGUI    = figure( 'Name'            , 'Animal Training Regiment'            ...
+                            , 'Units'           , 'pixels'                              ...
+                            , 'Position'        , obj.computeFigurePos(obj.GUI_SIZE)    ...
+                            , 'Menubar'         , 'none'                                ...
+                            , 'NumberTitle'     , 'off'                                 ...
+                            , 'Resize'          , 'on'                                  ...
+                            , 'Color'           , obj.GUI_COLOR                         ...
+                            );
+                          
+      % Create week schedule display
+      obj.axsSchedule         = axes( 'Color'           , 'none'                                          ...
+                                    , 'Units'           , 'normalized'                                    ...
+                                    , 'Position'        , [0.03 0.35 0.25 0.62]                           ...
+                                    , 'Box'             , 'on'                                            ...
+                                    , 'FontSize'        , obj.GUI_FONT                                    ...
+                                    , 'XAxisLocation'   , 'top'                                           ...
+                                    , 'XLim'            , [0.5, 0.5+numel(obj.DAYS)]                      ...
+                                    , 'YLim'            , obj.HOURS                                       ...
+                                    , 'YGrid'           , 'on'                                            ...
+                                    , 'YDir'            , 'reverse'                                       ...
+                                    , 'XTick'           , 1:numel(obj.DAYS)                               ...
+                                    , 'XTickLabel'      , obj.DAYS                                        ...
+                                    , 'YTick'           , obj.HOURS(1):2:obj.HOURS(2)                     ...
+                                    , 'YTickLabel'      , arrayfun( @(x) sprintf('%02d:00',mod(x-1,24)+1) ...
+                                                                  , obj.HOURS(1):2:obj.HOURS(2)           ...
+                                                                  , 'UniformOutput', false                ...
+                                                                  )                                       ...
+                                    );
+
+      % Create session and performance display per animal
+      obj.cntAnimal           = uigridcontainer ( 'v0'                                                    ...
+                                                , 'Units'               , 'normalized'                    ...
+                                                , 'Position'            , [0.3 0 0.7 1]                   ...
+                                                , 'EliminateEmptySpace' , 'off'                           ...
+                                                , 'GridSize'            , [size(obj.colorID,1) 1]         ...
+                                                );
+      for iAni = numel(obj.animal):-1:1
+        obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+      end
+      
+      % Create action buttons
+      obj.cntControls         = uiflowcontainer ( 'v0'                                                    ...
+                                                , 'Units'         , 'normalized'                          ...
+                                                , 'Position'      , [0.05 0.02 0.2 0.3]                   ...
+                                                , 'FlowDirection' , 'TopDown'                             ...
+                                                );
+      obj.btnAdd              = uicontrol       ( 'Parent'        , obj.cntControls                       ...
+                                                , 'Style'         , 'pushbutton'                          ...
+                                                , 'String'        , 'Add animal'                          ...
+                                                , 'FontSize'      , obj.GUI_FONT + 2                      ...
+                                                , 'Callback'      , @obj.fcnAddAnimal                     ...
+                                                , 'KeyPressFcn'   , {@obj.buttonKeypress, obj.btnSubmit}  ...
+                                                );
+      obj.btnEdit             = uicontrol       ( 'Parent'        , obj.cntControls                       ...
+                                                , 'Style'         , 'pushbutton'                          ...
+                                                , 'String'        , 'Edit ...'                            ...
+                                                , 'FontSize'      , obj.GUI_FONT + 2                      ...
+                                                , 'Enable'        , 'off'                                 ...
+                                                , 'Callback'      , @obj.fcnAddAnimal                     ...
+                                                , 'KeyPressFcn'   , {@obj.buttonKeypress, obj.btnSubmit}  ...
+                                                );
+      obj.btnRemove           = uicontrol       ( 'Parent'        , obj.cntControls                       ...
+                                                , 'Style'         , 'pushbutton'                          ...
+                                                , 'String'        , 'Remove ...'                          ...
+                                                , 'FontSize'      , obj.GUI_FONT + 2                      ...
+                                                , 'Enable'        , 'off'                                 ...
+                                                , 'Callback'      , @obj.fcnAddAnimal                     ...
+                                                , 'KeyPressFcn'   , {@obj.buttonKeypress, obj.btnSubmit}  ...
+                                                );
+      obj.btnSubmit           = uicontrol       ( 'Parent'        , obj.cntControls                       ...
+                                                , 'Style'         , 'pushbutton'                          ...
+                                                , 'String'        , '( Select an animal )'                ...
+                                                , 'FontSize'      , obj.GUI_FONT + 2                      ...
+                                                , 'Enable'        , 'off'                                 ...
+                                                , 'Callback'      , @obj.fcnSubmit                        ...
+                                                , 'KeyPressFcn'   , @obj.buttonKeypress                   ...
+                                                );
+      obj.btnCancel           = uicontrol       ( 'Parent'        , obj.cntControls                       ...
+                                                , 'Style'         , 'pushbutton'                          ...
+                                                , 'String'        , 'Cancel'                              ...
+                                                , 'FontSize'      , obj.GUI_FONT + 2                      ...
+                                                , 'Callback'      , @obj.fcnCancel                        ...
+                                                , 'KeyPressFcn'   , @obj.buttonKeypress                   ...
+                                                );
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Draws session and performance info for the given animal
+    function drawAnimalInfo(obj, iAni, hSchedule, hContainer)
+      
+      % Extend capacity of display if necessary
+      if iAni > size(obj.colorID, 1)
+        obj.colorID         = obj.decideColors(iAni);
+        set ( obj.cntAnimal                             ...
+            , 'GridSize'    , [size(obj.colorID,1) 1]   ...
+            );
+      end
+      
+      % Animal specific variables for convenience
+      info                  = obj.animal(iAni);
+      color                 = obj.colorID(iAni,:);
+      
+      % Create new graphics objects if this is a new animal
+      if iAni > numel(obj.guiAnimal) || isempty(obj.guiAnimal(iAni).session)
+        % Session time rectangles
+        for iDay = numel(obj.DAYS):-1:1
+          obj.guiAnimal(iAni).session(iDay)                                               ...
+                            = rectangle ( 'Parent'    , hSchedule                         ...
+                                        , 'FaceColor' , color                             ...
+                                        , 'EdgeColor' , [1 1 1]                           ...
+                                        , 'LineWidth' , 2                                 ...
+                                        );
+          obj.guiAnimal(iAni).label(iDay)                                                 ...
+                            = text      ( 'String'                , info.id               ...
+                                        , 'Parent'                , hSchedule             ...
+                                        , 'FontSize'              , obj.GUI_FONT - 1      ...
+                                        , 'FontWeight'            , 'bold'                ...
+                                        , 'VerticalAlignment'     , 'middle'              ...
+                                        , 'HorizontalAlignment'   , 'center'              ...
+                                        );
+        end
+
+        % Label for animal ID and possibly other information
+        obj.guiAnimal(iAni).panel                                                         ...
+                            = uipanel   ( 'Parent'          , hContainer                  ...
+                                        , 'BackgroundColor' , obj.GUI_COLOR               ...
+                                        , 'BorderType'      , 'none'                      ...
+                                        , 'ButtonDownFcn'   , {@obj.fcnSelectAnimal,iAni} ...
+                                        );
+        
+        % Axes for animal performance display
+        obj.guiAnimal(iAni).axsPerformance                                                ...
+                            = axes( 'Parent'          , obj.guiAnimal(iAni).panel         ...
+                                  , 'Units'           , 'normalized'                      ...
+                                  , 'Position'        , [0.05 0.4 0.94 0.55]              ...
+                                  , 'Color'           , [1 1 1]                           ...
+                                  , 'FontSize'        , obj.GUI_FONT - 2                  ...
+                                  , 'YLim'            , [-0.1 1.1]                        ...
+                                  , 'Box'             , 'on'                              ...
+                                  , 'ButtonDownFcn'   , {@obj.fcnSelectAnimal,iAni}       ...
+                                  );
+        xlabel('Session');
+        ylabel('Correct');
+        
+        % Performance plot lines
+        for iChoice = 1:numel(obj.CHOICES)
+          obj.guiAnimal(iAni).performance(iChoice)                                        ...
+                            = line( 'XData'           , []                                ...
+                                  , 'YData'           , []                                ...
+                                  , 'LineStyle'       , 'none'                            ...
+                                  , 'Color'           , obj.CHOICE_COLOR(iChoice, :)      ...
+                                  , 'Marker'          , obj.CHOICE_MARKER{iChoice}        ...
+                                  , 'MarkerSize'      , 5                                 ...
+                                  , 'MarkerFaceColor' , obj.CHOICE_COLOR(iChoice, :)      ...
+                                  , 'MarkerEdgeColor' , 'none'                            ...
+                                  );
+        end
+        
+        % Legend
+        obj.guiAnimal(iAni).legend                                              ...
+                            = legend( obj.guiAnimal(iAni).performance           ...
+                                    , obj.CHOICE_NAME                           ...
+                                    , 'Location'      , 'SouthEastOutside'      ...
+                                    );
+        obj.guiAnimal(iAni).title                                               ...
+                            = ltitle( obj.guiAnimal(iAni).legend, info.id       ...
+                                    , 'FontSize'                , obj.GUI_FONT  ...
+                                    );
+            
+        % Other information that will be added on demand
+        
+      end
+      
+      
+      % Set position of session time rectangles and labels
+      for iDay = 1:numel(obj.DAYS)
+        set ( obj.guiAnimal(iAni).session(iDay)               ...
+            , 'Position'  , [ iDay - 0.5                      ...
+                            , info.session(iDay).start        ...
+                            , 1                               ...
+                            , info.session(iDay).duration/60  ...
+                            ]                                 ...
+            );
+        set ( obj.guiAnimal(iAni).label(iDay)                                               ...
+            , 'Position'  , [ iDay                                                          ...
+                            , info.session(iDay).start + info.session(iDay).duration/60/2   ...
+                            ]                                                               ...
+            );
+      end
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Modal dialog box for animal information
+    function info = dialogEditAnimal(obj, info)
+
+      animalData    = setdiff( fieldnames(info)', 'session' );
+      
+
+      % Setup dialog box window
+      hDialog       = figure( 'Name'            , 'Training Schedule'                   ...
+                            , 'Units'           , 'pixels'                              ...
+                            , 'Position'        , obj.computeFigurePos([0.4 0.3])       ...
+                            , 'Menubar'         , 'none'                                ...
+                            , 'NumberTitle'     , 'off'                                 ...
+                            , 'Resize'          , 'on'                                  ...
+                            , 'Color'           , obj.GUI_COLOR                         ...
+                            , 'WindowStyle'     , 'modal'                               ...
+                            );
+      cData         = uigridcontainer ( 'v0'                                            ...
+                                      , 'Units'               , 'normalized'            ...
+                                      , 'Position'            , [0.02 0.22 0.4 0.76]    ...
+                                      , 'EliminateEmptySpace' , 'off'                   ...
+                                      , 'GridSize'            , [numel(animalData),2]   ...
+                                      , 'HorizontalWeight'    , [2, 3]                  ...
+                                      );
+      cSchedule     = uigridcontainer ( 'v0'                                            ...
+                                      , 'Units'               , 'normalized'            ...
+                                      , 'Position'            , [0.44 0.02 0.55 0.96]   ...
+                                      , 'GridSize'            , [numel(obj.DAYS)+1,4]   ...
+                                      , 'HorizontalWeight'    , [2, 4, 3, 1]            ...
+                                      );
+      cAction       = uiflowcontainer ( 'v0'                                            ...
+                                      , 'Units'               , 'normalized'            ...
+                                      , 'Position'            , [0.02 0.02 0.4 0.15]    ...
+                                      , 'FlowDirection'       , 'LeftToRight'           ...
+                                      );
+
+      % Create action buttons
+      hSubmit               = uicontrol ( 'Parent'        , cAction                         ...
+                                        , 'Style'         , 'pushbutton'                    ...
+                                        , 'String'        , 'Submit'                        ...
+                                        , 'FontSize'      , obj.GUI_FONT + 2                ...
+                                        , 'Callback'      , @obj.fcnSubmit                  ...
+                                        , 'KeyPressFcn'   , @obj.buttonKeypress             ...
+                                        );
+      hCancel               = uicontrol ( 'Parent'        , cAction                         ...
+                                        , 'Style'         , 'pushbutton'                    ...
+                                        , 'String'        , 'Cancel'                        ...
+                                        , 'FontSize'      , obj.GUI_FONT + 2                ...
+                                        , 'Callback'      , @obj.fcnCancel                  ...
+                                        , 'KeyPressFcn'   , {@obj.buttonKeypress, hSubmit}  ...
+                                        );
+                                              
+      % Create input fields populated with default values
+      hInput        = [];
+      for iData = 1:numel(animalData)
+        hInput(1, iData)    = uicontrol ( 'Parent'              , cData                     ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , [animalData{iData} ' = '] ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'Enable'              , 'inactive'                ...
+                                        , 'BackgroundColor'     , obj.GUI_COLOR             ...
+                                        , 'HorizontalAlignment' , 'right'                   ...
+                                        );
+        hInput(2, iData)    = uicontrol ( 'Parent'              , cData                     ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , num2str(info.(animalData{iData}))       ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'BackgroundColor'     , [1 1 1]                   ...
+                                        , 'HorizontalAlignment' , 'left'                    ...
+                                        , 'Callback'            , obj.deduceValidator(animalData{iData})  ...
+                                        , 'KeyPressFcn'         , {@obj.dispatchKeypress, hSubmit}        ...
+                                        );
+      end
+      
+      % Create session time entry list
+      headers               = {'', 'Start (hh:mm)', 'Duration (min)', ''};
+      for iHead = 1:numel(headers)
+        hSchedule(iHead,1)  = uicontrol ( 'Parent'              , cSchedule                 ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , headers{iHead}            ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'Enable'              , 'inactive'                ...
+                                        , 'BackgroundColor'     , obj.GUI_COLOR             ...
+                                        , 'HorizontalAlignment' , 'center'                  ...
+                                        );
+        if isempty(headers{iHead})
+          set(hSchedule(iHead,1), 'Style', 'text');
+        end
+      end
+                                      
+      for iDay = 1:numel(obj.DAYS)
+        hSchedule(1,iDay+1) = uicontrol ( 'Parent'              , cSchedule                 ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , obj.DAYS{iDay}            ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'Enable'              , 'inactive'                ...
+                                        , 'BackgroundColor'     , obj.GUI_COLOR             ...
+                                        , 'HorizontalAlignment' , 'center'                  ...
+                                        );
+        hSchedule(2,iDay+1) = uicontrol ( 'Parent'              , cSchedule                 ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , time2str(info.session(iDay).start)    ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'BackgroundColor'     , [1 1 1]                   ...
+                                        , 'HorizontalAlignment' , 'center'                  ...
+                                        , 'Callback'            , @obj.validateTime         ...
+                                        , 'KeyPressFcn'         , {@obj.dispatchKeypress, hSubmit}      ...
+                                        );
+        hSchedule(3,iDay+1) = uicontrol ( 'Parent'              , cSchedule                 ...
+                                        , 'Style'               , 'edit'                    ...
+                                        , 'String'              , num2str(info.session(iDay).duration)  ...
+                                        , 'FontSize'            , obj.GUI_FONT              ...
+                                        , 'BackgroundColor'     , [1 1 1]                   ...
+                                        , 'HorizontalAlignment' , 'center'                  ...
+                                        );
+        hSchedule(4,iDay+1) = uicontrol ( 'Parent'              , cSchedule                 ...
+                                        , 'Style'               , 'pushbutton'              ...
+                                        , 'String'              , '*'                       ...
+                                        , 'FontSize'            , obj.GUI_FONT + 4          ...
+                                        , 'FontWeight'          , 'bold'                    ...
+                                        , 'HorizontalAlignment' , 'center'                  ...
+                                        , 'KeyPressFcn'         , {@obj.buttonKeypress, hSubmit}        ...
+                                        );
+      end
+      
+      % The callback needs to be set after all controls have been made
+      for iDay = 1:numel(obj.DAYS)
+        set(hSchedule(4,iDay+1), 'Callback', {@obj.copyInput, hSchedule(2:3,iDay+1), hSchedule(2:3,[2:iDay, iDay+2:end])});
+      end
+    
+    
+      % Focus on default object and wait until user is done
+      get(hSubmit, 'UserData')
+      uicontrol(hInput(2,1));
+      uiwait(hDialog);
+      
+      % Retrieve results and close dialog box (if it still exists)
+      if ~ishghandle(hDialog)
+        return;
+      end
+      
+      get(hSubmit, 'UserData')
+      if get(hSubmit, 'UserData') == true
+        for iData = 1:numel(animalData)
+          info.(animalData{iData})      = obj.deduceData(animalData{iData}, hInput(2,iData));
+        end
+        for iDay = 1:numel(obj.DAYS)
+          info.session(iDay).start      = obj.deduceData('time', hSchedule(2,iDay+1));
+          info.session(iDay).duration   = obj.deduceData(''    , hSchedule(3,iDay+1));
+        end
+      else
+        info  = [];
+      end
+      
+      close(hDialog);
+      
+    end
+
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback for selecting an existing animal
+    function [] = fcnSelectAnimal(obj, handle, event, iAni)
+      
+      % Turn off previous highlights
+      set([obj.guiAnimal.panel], 'BackgroundColor', obj.GUI_COLOR);
+      set([obj.guiAnimal.title], 'Color'          , [0 0 0]);
+      
+      % Color the selected panel
+      set(obj.guiAnimal(iAni).panel, 'BackgroundColor', obj.colorID(iAni,:));
+      set(obj.guiAnimal(iAni).title, 'Color'          , [1 1 1]);
+      
+      % Set selection data for action buttons
+      actions     = [obj.btnEdit, obj.btnRemove, obj.btnSubmit];
+      set(actions       , 'Enable'    , 'on', 'UserData', iAni);
+      set(obj.btnEdit   , 'String'    , ['Edit ' obj.animal(iAni).id]);
+      set(obj.btnRemove , 'String'    , ['Remove ' obj.animal(iAni).id]);
+      set(obj.btnSubmit , 'String'    , ['START training ' obj.animal(iAni).id] ...
+                        , 'FontWeight', 'bold'                                  ...
+                        );
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback for adding an animal to the schedule
+    function [] = fcnAddAnimal(obj, handle, event)
+      
+      % Obtain user input for animal data
+      info  = obj.dialogEditAnimal(obj.animalForm);
+      if isempty(info)
+        return;
+      end
+      
+      iAni              = numel(obj.animal) + 1;
+      obj.animal(iAni)  = info;
+      obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback for editing info for an existing animal
+    function [] = fcnEditAnimal(obj, handle, event)
+      
+      % Obtain user input for animal data
+      iAni  = get(handle, 'UserData');
+      info  = obj.dialogEditAnimal(obj.animal(iAni));
+      if isempty(info)
+        return;
+      end
+      
+      obj.animal(iAni)  = info;
+      obj.drawAnimalInfo(iAni, obj.axsSchedule, obj.cntAnimal);
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback
+    function [] = fcnRemoveAnimal(obj, handle, event, index)
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Computes a central position for a figure of the given size
+    function position = computeFigurePos(obj, figureSize)
+      
+      if numel(figureSize) == 1
+        figureSize  = floor(figureSize * obj.screenSize(3:4));
+      elseif all(figureSize <= 1)
+        figureSize  = floor(figureSize .* obj.screenSize(3:4));
+      end      
+      border        = round( (obj.screenSize(3:4) - figureSize) / 2 );
+      position      = [obj.screenSize(1:2) + border, figureSize];
+
+    end
+    
+    
+%     %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- 
+%     function [] = ()
+%     end
+    
+  end
+  
+  %________________________________________________________________________
+  methods (Static)
+
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Decides on colors for each animal
+    function colors = decideColors(maxAnimals)
+      
+      if maxAnimals <= 9
+        colors  = linspecer(9 , 'qualitative');
+      elseif maxAnimals <= 12
+        colors  = linspecer(12, 'qualitative');
+      else
+        colors  = linspecer(maxAnimals);
+      end
+      
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to check for printable characters
+    function yes = isPrintable(character)
+      yes   = ( ~isempty(character) && character > 31 && character < 127 );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to obtain numeric input with optional postfix
+    function value = getNumber(str, postfix)
+      number  = regexp( str, TrainingRegiment.RGX_NUMBER, 'tokens', 'once' );
+      if isempty(number)
+        value = '';
+      elseif nargin > 1
+        value = strcat(number{1}, postfix);
+      else
+        value = number{1};
+      end
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to ensure proper Matlab-compatible variable name
+    function validateIdentifier(handle, event)
+      input   = regexp(get(handle, 'String'), TrainingRegiment.RGX_VARNAME, 'tokens');
+      if isempty(input)
+        input = '';
+      else
+        input = strcat(input{:});
+        input = input{:};
+      end
+
+      if isempty(input) || ~isletter(input(1))
+        input = strcat(TrainingRegiment.DEFAULT_ID, input);
+      end
+      
+      set( handle, 'String', input );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to ensure proper age entry (in weeks)
+    function validateAge(handle, event)
+      set( handle, 'String', TrainingRegiment.getNumber(get(handle, 'String'), ' week(s)') );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to ensure proper weight entry (in grams)
+    function validateWeight(handle, event)
+      set( handle, 'String', TrainingRegiment.getNumber(get(handle, 'String'), ' gram(s)') );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to ensure proper date entry
+    function validateDate(handle, event)
+      input       = regexp(get(handle, 'String'), TrainingRegiment.RGX_DATE, 'tokens', 'once');
+      ref         = clock;
+      if isempty(input)
+        input     = {ref(2), ref(3), ref(1)};
+      else
+        input     = { max(min( str2double(input{1}) , 12 ), 1)  ...
+                    , max(min( str2double(input{2}) , 31 ), 1)  ...
+                    ,     min( str2double(input{3}) , ref(1) )  ...
+                    };
+      end
+      if log10(input{3}) < 2
+        input{3}  = floor(ref(1)/100) * 100 + input{3};
+      end
+      
+      set( handle, 'String', sprintf('%d/%d/%d', input{:}) );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to ensure proper time entry
+    function validateTime(handle, event)
+      input       = regexp(get(handle, 'String'), TrainingRegiment.RGX_TIME, 'tokens', 'once');
+      if isempty(input)
+        ref       = clock;
+        input     = {ref(4), ref(5)};
+      else
+        input     = { min(max( str2double(input{1}) , TrainingRegiment.HOURS(1) ), TrainingRegiment.HOURS(2))  ...
+                    , min(max( str2double(input{2}) , 0 ), 59)  ...
+                    };
+      end
+      
+      set( handle, 'String', sprintf('%02d:%02d', input{:}) );
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to copy user input from one control to others
+    function copyInput(handle, event, source, target)
+      if size(source, 1) > 1
+        for row = 1:size(source, 1)
+          set(target(row,:), 'String', get(source(row,:), 'String'));
+        end
+      else
+        for col = 1:size(source, 2)
+          set(target(:,col), 'String', get(source(:,col), 'String'));
+        end
+      end
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to allow keys to push buttons
+    function buttonKeypress(handle, event, submitter)
+      % Allow Enter to press buttons
+      if strcmpi(event.Key, 'return')
+        if isempty(event.Modifier)
+          fcn   = get(handle, 'Callback');
+          if iscell(fcn)
+            fcn{1}(handle, event, fcn{2:end});
+          elseif ~isempty(fcn)
+            fcn(handle, event);
+          end
+          
+        % Allow alt+Enter to jump to submit button
+        elseif nargin > 2 && strcmpi(event.Modifier, 'alt')
+          uicontrol(submitter);
+        end
+      end
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to commit/dismiss dialogs
+    function dispatchKeypress(handle, event, submitter)
+      % Allow alt+Enter to jump to submit button
+      if strcmpi(event.Key, 'return') && strcmpi(event.Modifier, 'alt')
+        uicontrol(submitter);
+      end
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to select an appropriate validation callback
+    function fcn = deduceValidator(name)
+      if ~isempty(regexpi(name, 'age', 'once'))
+        fcn   = @TrainingRegiment.validateAge;
+      elseif ~isempty(regexpi(name, 'date', 'once'))
+        fcn   = @TrainingRegiment.validateDate;
+      elseif ~isempty(regexpi(name, 'weight', 'once'))
+        fcn   = @TrainingRegiment.validateWeight;
+      elseif ~isempty(regexp(name, TrainingRegiment.RGX_HASID, 'once'))
+        fcn   = @TrainingRegiment.validateIdentifier;
+      else
+        fcn   = '';
+      end
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Helper function to convert validated data to recorded values
+    function data = deduceData(name, handle)
+      value     = get(handle, 'String');
+      
+      if ~isempty(regexpi(name, 'date', 'once'))
+        input   = regexp(value, TrainingRegiment.RGX_DATE, 'tokens', 'once');
+        if isempty(input)
+          data  = '';
+        else
+          data  = [str2double(input{3}), str2double(input{1}), str2double(input{2})];
+        end
+      elseif ~isempty(regexp(name, TrainingRegiment.RGX_HASID, 'once'))
+        data    = value;
+      else
+        data    = str2double( TrainingRegiment.getNumber(value) );
+      end
+    end
+    
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback that flags user interaction as successful
+    function fcnSubmit(handle, event)
+      set(handle, 'UserData', true);
+      uiresume(gcbf);
+    end
+    
+    %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- Callback that exits without success
+    function fcnCancel(handle, event)
+      uiresume(gcbf);
+    end
+
+    
+  end
+  
+end
+
+##### SOURCE END #####
+--></body></html>
