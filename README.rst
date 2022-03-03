@@ -4,6 +4,9 @@ A vector reward prediction error model explains dopaminergic heterogeneity
 
 This repo contains the code needed to reproduce the model and figures from the manuscript: `Lee et al. 2022 <https://www.biorxiv.org/content/10.1101/2022.02.28.482379v1>`_. The data needed to run the figure notebook will be available on figshare upon publication. 
 
+This repository is being actively updated and organized. 
+TODO: add requirements and conda environment yml file 
+
 Author
 ^^^^^^
 Rachel Lee (rslee [at] princeton.edu)
@@ -30,7 +33,6 @@ Project Organization
     │
     ├── gym_vr                       <- Stable Baselines Custom Environment, requires gym 0.14.0 and setting up a custom environment 
     │
-    ├── requirements.txt             <- Python packages used in this project.
     
     
 Installation Requirements 
