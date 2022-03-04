@@ -38,7 +38,7 @@ Project Organization
 Installation Requirements 
 ^^^^^^^^^^^^
 
-ViRMEn and the deep RL code can only be run on a Windows 10 Desktop with Python 3.7+. ViRMEn source code is self-contained in the folder, based on the `ViRMEn pacakge <http://pni.princeton.edu/pni-software-tools/virmen-download>`_ (version 2016-2-12). The ``deepRL`` source code for the network requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0). In order to run the deep RL network with the VR task from ViRMEn, you must set up the custom environment ``gym_vr``, which requires the `Open AI gym package <https://github.com/openai/gym>`_ (version 0.14.0) and following these `instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_. 
+ViRMEn and the deep RL code can only be run on a Windows 10 Desktop with Python 3.7+. ViRMEn source code is self-contained in the folder, based on the `ViRMEn package <http://pni.princeton.edu/pni-software-tools/virmen-download>`_ (version 2016-2-12). The ``deepRL`` source code for the network requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0). In order to run the deep RL network with the VR task from ViRMEn, you must set up the custom environment ``gym_vr``, which requires the `Open AI gym package <https://github.com/openai/gym>`_ (version 0.14.0) and following these `instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_. 
 
 Installation 
 ^^^^^^^^^^^^
