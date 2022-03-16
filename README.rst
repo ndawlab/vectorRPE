@@ -4,8 +4,12 @@ A vector reward prediction error model explains dopaminergic heterogeneity
 
 This repo contains the code needed to reproduce the model and figures from the manuscript: `Lee et al. 2022 <https://www.biorxiv.org/content/10.1101/2022.02.28.482379v1>`_. The data needed to run the figure notebook will be available on figshare upon publication. 
 
-This repository is being actively updated and organized. 
-TODO: add requirements and conda environment yml file 
+This repository is being actively updated and organized. Data will be available on Figshare upon publication or by request. 
+Remaining work include: 
+- more detailed instructions on requirements for running deepRL network with ViRMEn task
+- details on data structures and how they're formatted
+- requirement files for figure analyses and deep RL agent
+- all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
 
 Author
 ^^^^^^
