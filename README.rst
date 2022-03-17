@@ -74,26 +74,31 @@ Data should be downloaded and placed in the `data` folder of this repository. Co
     │   ├── rl_model_20800000_steps  <- trained weights of RL agent
     |   ├── 5000t_mosttrain_db.p     <- 5000 trials of trained RL agent, data outputted from evaluate_policies.ipynb
     │   ├── trianinfo_db.mat         <- 5000 trials of trained RL agent, data outputted from ViRMEn
-    |   ├── pes.p                    <- Vector RPEs calcuated using the trained weights and features from 5000 trials. 
+    |   ├── pes.p                    <- Vector RPEs calcuated using the trained weights and features from 5000 trials
     |   ├── no_va                    <- outputs from the same trained deep RL network running in a maze without cues 
     |   |    ├── 5000t_mosttrain_nova_db.p 
     │   |    ├── trianinfo_nova_db.mat      
     |   |    ├── pes_nova.p                 
-    |   |    ├── 1000t_obses_nova_db.p     <- Video frames from the first 1000 trials of the trained deep RL agent running in a maze without cues. 
-    │   |    ├── emptymaze_runthru.mat     <- Video frames (obses) and Y positions (ypos) of an agent running down an empty maze. 
+    |   |    ├── 1000t_obses_nova_db.p     <- Video frames from the first 1000 trials of the trained deep RL agent running in a maze without cues 
+    │   |    ├── emptymaze_runthru.mat     <- Video frames (obses) and Y positions (ypos) of an agent running down an empty maze
     │
-    ├── neuralData                  
-    │   ├── res_cell_ac_sfn           <- neural data from Engelhard et al. 2019 paper re-analyzed for Lee et al. 2022. 
+    ├── neuralData                             <- neural data from Engelhard et al. 2019 paper re-analyzed for Lee et al. 2022 
+    │   ├── res_cell_ac_sfn.mat                <- raw neural data of 303 neurons recorded across 23 sessions 
+    │   ├── psycho_neural.mat                  <- psychometric curve for mice behavior (see Figure 2B)
+    │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 3D-F) 
+    │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)
+    
+
 
 
 Data structures are organized as such: 
 **********************
 
-**For deep RL agent's outputs:**
+**From the deep RL agent:**
 
 (1) ``rl_model_20800000_steps``: 
 
-Contains a subset of the trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. Four weights are recorded: 
+Contains a subset of the trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. Four weights are included:  
 
 ``model/pi/w:0``: The weights for the actor policy
 
@@ -149,7 +154,7 @@ The relevant task variables include:
 - ``cueOnset``: 2 x M matrix that gives the timestep the left cues (first row) and right cues (second row) appeared in. Note that timestep is given in 1-indexing and also off by 1 timestep, so needs to be corrected by subtracting 2 when working in Python (see Figure 3C code in ``Figure 3.ipynb``). 
 
 
-**For neural data:**
+**For the neural analyses:**
 
 (1) ``res_cell_ac_sfn``: 1 x 23 struct array, each entry for the 23 sessions recorded for `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ 
 
@@ -157,9 +162,9 @@ Relevant fields include:
 
 - ``folder``: mouse #/date for the given session.
 
-- ``good_tr``: ``1 x num_trials`` of the trial indices that are included if they meet some bar of good behavior. Note that all fields suffixed with ``_gd`` means that certain trials are dropped if they do not meet some bar of good behavior. 
+- ``good_tr``: ``1 x num_trials`` row vector indicates which are the good trials in which the mice were engaged in the task; that is, for all the fields below suffixed with ``_gd``, approximately 15% of trials per session were dropped if mice were not sufficiently engaged in the task, typically near the end of the session when the animal's performance decreased (See  `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ Methods > Session and Trial Selection for the exact critereon for dropping trials). 
 
-- ``whole_trial_activity``: ``num_trials x 1`` cell array, each cell an ``num_timesteps x num_neurons `` matrix containing the whole trial activity of neurons recorded. Note that when ``NaN`` values appear when neuron becomes unstable and we were no longer able to record meaningful neural activity. 
+- ``whole_trial_activity``: ``num_trials x 1`` cell array, each cell an ``num_timesteps x num_neurons`` matrix containing the whole trial activity of neurons recorded. Note that when ``NaN`` values appear when neuron becomes unstable and we were no longer able to record meaningful neural activity. 
 
 - ``lr_cue_onset``: ``num_trials x 1`` cell array, each cell an ``num_timesteps x 2`` indicator matrix for when left (first column) and right (second column) appears. 
 
@@ -181,8 +186,6 @@ Relevant fields include:
 
 
 
-
-TODO: check with Ben on what the behavioral bar for dropping trials in _gd– if i recall correctly, it's when mice performance dropped to a degree they go to an easier maze. 
 
 
             
