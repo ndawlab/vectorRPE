@@ -84,6 +84,7 @@ Data should be downloaded and placed in the `data` folder of this repository. Co
     │
     ├── neuralData                             <- neural data from Engelhard et al. 2019 paper re-analyzed for Lee et al. 2022 
     │   ├── res_cell_ac_sfn.mat                <- raw neural data of 303 neurons recorded across 23 sessions 
+    │   ├── shuffled_data                      <- folder with 1000 instances of shuffled raw neural data 
     │   ├── psycho_neural.mat                  <- psychometric curve for mice behavior (see Figure 2B)
     │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 3D-F) 
     │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)
@@ -156,7 +157,7 @@ The relevant task variables include:
 
 **For the neural analyses:**
 
-(1) ``res_cell_ac_sfn``: 1 x 23 struct array, each entry for the 23 sessions recorded for `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ 
+(1) ``res_cell_ac_sfn`` and all other shuffled neural data files: 1 x 23 struct array, each entry for the 23 sessions recorded for `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ 
 
 Relevant fields include: 
 
