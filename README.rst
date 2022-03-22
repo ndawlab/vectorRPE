@@ -84,7 +84,10 @@ Data should be downloaded and placed in the `data` folder of this repository. Co
     │
     ├── neuralData                             <- neural data from Engelhard et al. 2019 paper re-analyzed for Lee et al. 2022 
     │   ├── res_cell_ac_sfn.mat                <- raw neural data of 303 neurons recorded across 23 sessions 
-    │   ├── shuffled_data                      <- folder with 1000 instances of shuffled raw neural data 
+    │   ├── shuffled_data                      <- folder with 1000 instances of shuffled raw neural data, * denotes each instance
+    │   │    ├── res_cell_acsfn_shuffbins_3s_*.mat                     <- 1000 instances of shuffled neural data, same format as res_cell_ac_sfn.mat
+    │   │    ├── res_cell_acsfn_shuffbins_3s_new_fstat*_FO.mat         <- F-statistics for shuffled data of 303 neurons wrt to 5 behavioral variables during cue period
+    │   │    ├── res_cell_acsfn_shuffbins_3s_new_fstat*_FO_outcome.mat <- F-statistics for shuffled data of 303 neurons wrt to reward
     │   ├── psycho_neural.mat                  <- psychometric curve for mice behavior (see Figure 2B)
     │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 3D-F) 
     │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)
@@ -119,7 +122,7 @@ This data structure is outputted from `evalute_policies.ipynb` and contains vari
 
 Dataset includes (in this order): 
 
-- ``actions``: actions of the agent (1: Left 2: Right 3: Forward). Note that actions during cue region (see Figure 2a) changes agent's view angle and actions after cue region allows the agent to decide to left or right arm)
+- ``actions``: actions of the agent (1: Left 2: Right 3: Forward). Note that actions during cue region (see Figure 2a) changes agent's view angle and actions after cue region allows the agent to decide to left or right arm. 
 
 - ``rewards``: 0 = no reward at this timestep, 1 = reward at this timestep
 
@@ -157,13 +160,13 @@ The relevant task variables include:
 
 **For the neural analyses:**
 
-(1) ``res_cell_ac_sfn`` and all other shuffled neural data files: 1 x 23 struct array, each entry for the 23 sessions recorded for `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ 
+(1) ``res_cell_ac_sfn`` and shuffled data ``res_cellacsfn_shuffbins_3s_*.mat``: 1 x 23 struct array, each entry for the 23 sessions recorded for `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ Each instance of the shuffled data is created by shuffling non-overlapping 3-s bins (to maintain the autocorrelation of the signal). See `Engelhard et al. 2019 paper's <https://www.nature.com/articles/s41586-019-1261-9>`_ Methods > Calculation of the relative contributions of behavioural variables to neural activity for more information on the shuffled data. 
 
 Relevant fields include: 
 
 - ``folder``: mouse #/date for the given session.
 
-- ``good_tr``: ``1 x num_trials`` row vector indicates which are the good trials in which the mice were engaged in the task; that is, for all the fields below suffixed with ``_gd``, approximately 15% of trials per session were dropped if mice were not sufficiently engaged in the task, typically near the end of the session when the animal's performance decreased (See  `Engelhard et al. 2019 paper. <https://www.nature.com/articles/s41586-019-1261-9>`_ Methods > Session and Trial Selection for the exact critereon for dropping trials). 
+- ``good_tr``: ``1 x num_trials`` row vector indicates which are the good trials in which the mice were engaged in the task; that is, for all the fields below suffixed with ``_gd``, approximately 15% of trials per session were dropped if mice were not sufficiently engaged in the task, typically near the end of the session when the animal's performance decreased (See  `Engelhard et al. 2019 paper's <https://www.nature.com/articles/s41586-019-1261-9>`_ Methods > Session and Trial Selection for the exact critereon for dropping trials). 
 
 - ``whole_trial_activity``: ``num_trials x 1`` cell array, each cell an ``num_timesteps x num_neurons`` matrix containing the whole trial activity of neurons recorded. Note that when ``NaN`` values appear when neuron becomes unstable and we were no longer able to record meaningful neural activity. 
 
