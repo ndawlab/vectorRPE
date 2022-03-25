@@ -22,7 +22,11 @@ import pickle
 
 import tensorflow as tf
 from stable_baselines.common.tf_layers import conv, linear, conv_to_fc, lstm
-
+from gym.envs.registration import register
+register(
+    id='vrgym-v0',
+    entry_point='gym_vr.envs:VRShapingEnv',
+)
 
 log_path = './logs/test/'
 env_id = 'vrgym-v0'
