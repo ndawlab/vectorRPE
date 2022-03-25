@@ -166,7 +166,7 @@ Data structures are organized as such:
 
 (1) ``rl_model_20800000_steps``: 
 
-Contains a subset of the trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. Four weights are included:  
+Contains the trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. Only a subset of the weights were used in the analysis, including: 
 
 ``model/pi/w:0``: The weights for the actor policy
 
@@ -176,8 +176,6 @@ Contains a subset of the trained weights of the deep RL model after 2,080,000 ti
 
 ``model/vf/b:0``: The biase weights for the critic's value
 
-
-TODO: add all weights? 
 
 
 (2) ``data/logs/5000t_mosttrain_db.p`` and  ``data/logs/5000t_mosttrain_nova_db.p`` : 
