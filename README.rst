@@ -99,7 +99,7 @@ These are PC configurations in which we were able to replicate our training regi
     cd gym
     pip install -e .
 
-Next, move the ``gym_vr`` folder from this repo into ``gym\gym\envs`` folder. You will want to follow `these instructions https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. 
+Next, move the ``gym_vr`` folder from this repo into ``gym\gym\envs`` folder. You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. 
 
 5. Download `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. Make sure to add and save the entire ``virmen`` path from this repo. 
 
