@@ -8,13 +8,13 @@ This repository is being actively updated and organized. Data will be available 
 
 Remaining work include: 
 
-- more detailed instructions on requirements for running deepRL network with ViRMEn task
+- [in progress] more detailed instructions on requirements for running deepRL network with ViRMEn task
 
 - [done] details on data structures and how they're formatted
 
 - requirement files for figure analyses and deep RL agent
 
-- all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
+- [in progress] all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
 
 Author
 ^^^^^^
@@ -166,7 +166,7 @@ Data structures are organized as such:
 
 (1) ``rl_model_20800000_steps``: 
 
-Contains the trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. Only a subset of the weights were used in the analysis, including: 
+Contains dictionary of trained weights of the deep RL model after 2,080,000 timesteps (approximately 130,000 trials). Cut-off for training was determined when agent performed at 80% or higher correct choices. You may see the full list of weights by checking all the keys in the dictionary, but the four weights that were particularly relevant for our vector RPE analyses include: 
 
 ``model/pi/w:0``: The weights for the actor policy
 
