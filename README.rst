@@ -12,9 +12,13 @@ Remaining work include:
 
 - [done] details on data structures and how they're formatted
 
-- requirement files for figure analyses and deep RL agent
+- requirement files for figure analyses and deep RL agent [just output the .yml] 
 
 - [in progress] all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
+
+Work before publishing:
+
+- check that the data paths all make sense upon downloading (check all figure code's ``load_mat`` and ``pickle.load()``
 
 Author
 ^^^^^^
@@ -142,7 +146,7 @@ Data should be downloaded and placed in the `data` folder of this repository. Co
     |   ├── no_va                    <- outputs from the same trained deep RL network running in a maze without cues 
     |   |    ├── 5000t_mosttrain_nova_db.p 
     │   |    ├── trianinfo_nova_db.mat      
-    |   |    ├── pes_nova.p                 
+    |   |    ├── pes_nova_db.p                 
     |   |    ├── 1000t_obses_nova_db.p     <- Video frames from the first 1000 trials of the trained deep RL agent running in a maze without cues 
     │   |    ├── emptymaze_runthru.mat     <- Video frames (obses) and Y positions (ypos) of an agent running down an empty maze
     │
@@ -154,8 +158,8 @@ Data should be downloaded and placed in the `data` folder of this repository. Co
     │   │    ├── res_cell_acsfn_shuffbins_3s_new_fstat*_FO_outcome.mat <- F-statistics for shuffled data of 303 neurons wrt to reward
     │   ├── psycho_neural.mat                  <- psychometric curve for mice behavior (see Figure 2B)
     │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 3D-F) 
-    │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)
-    
+    │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)  
+    │   ├── spline_basis30_int.mat             <- TODO: description for this 
 
 
 
@@ -198,8 +202,6 @@ Dataset includes (in this order):
 
 - ``episode_lengths``: length of each trial. Note that the episode lengths vary because agent can choose the forward action after cue region, which is a null action that means the agent does not choose left OR right arm yet. 
 
-
-TODO: take out the yposition!!! it's empty and I don't use it anymore. and left/right movement is CORRECTLY described. 
 
 (3) ``train_info_db.mat`` and ``trianinfo_nova_db.mat``:
 
