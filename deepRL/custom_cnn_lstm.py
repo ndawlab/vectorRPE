@@ -17,7 +17,6 @@ from stable_baselines.bench import Monitor
 import os
 import subprocess
 
-import supervised_utils
 import pickle
 
 import tensorflow as tf

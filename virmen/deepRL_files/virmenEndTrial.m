@@ -1,6 +1,5 @@
 function choice = virmenEndTrial(trial, pid) % , log_path, is_play)
 global vr
-disp('saving trial')
 % vr.ChoiceMade is already called. I only need InterTrial
 % information. I added logging information here
 %       if(char(vr.choice)== 'R')

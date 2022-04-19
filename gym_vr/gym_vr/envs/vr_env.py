@@ -22,7 +22,7 @@ class VRShapingEnv(gym.Env):
     self.action_space = spaces.Discrete(3)
     # Example for using image as input:
     self.observation_space = spaces.Box(low=0, high=1, shape=
-                    (69, 120, 1), dtype=np.float) # original (1080,1920) (540, 960)(68, 120, 1)
+                    (69, 120, 1), dtype=float) # original (1080,1920) (540, 960)(68, 120, 1)
  
     self.eng = matlab.engine.start_matlab()
     self.eng.initializeVR(nargout=0) # self.tow_pos = 
@@ -37,7 +37,7 @@ class VRShapingEnv(gym.Env):
     self.post_trial_curr_step = 0
     self.POST_TRIAL_STEP = 8
 
-    path = r'C:\\Users\\witten_goat\\Documents\\tankmousevr\\rachel\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
+    path = r'C:\\Users\\rslee\\Documents\\GitHub\\vectorRPE\\virmen\\deepRL_files\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
     if time.time() - os.path.getmtime(path) > 3600: # created more than an hour ago. prevents multiple threads to re-generate
       self.eng.generate_stimuli(nargout=0)
 
