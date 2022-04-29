@@ -84,7 +84,7 @@ class VRShapingEnv(gym.Env):
     else:
       # gets the output 
       # 
-      screen = self.eng.virmenGetFrame(1, nargout =1)
+      screen = self.eng.virmenGetFrame_1dim(1, nargout =1)
       screen = np.array(screen._data).reshape(screen.size[::-1]).T
       # gives one-hot with first two entries denoting no-rew, rew
       rew_info =  np.eye(120)[int(vr_status - 1)]
@@ -127,14 +127,14 @@ class VRShapingEnv(gym.Env):
     return screen
 
   def render(self, mode='human', close=False):
-    # screen = self.eng.virmenGetFrame(1, nargout =1) # np.array()
+    # screen = self.eng.virmenGetFrame_1dim(1, nargout =1) # np.array()
 
     # screen = np.expand_dims(np.array(screen._data).reshape(screen.size[::-1]).T, 2)    
 
     return
 
 def get_images(self):
-    screen = np.vstack((self.eng.virmenGetFrame(1, nargout =1), np.zeros((1,120)))) 
+    screen = np.vstack((self.eng.virmenGetFrame_1dim(1, nargout =1), np.zeros((1,120)))) 
 
     screen = np.expand_dims(np.array(screen._data).reshape(screen.size[::-1]).T, 2)    
     return screen
