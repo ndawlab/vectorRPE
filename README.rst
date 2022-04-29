@@ -9,7 +9,7 @@ This repository is being actively updated and organized. Data will be available 
 Remaining work include: 
 
 - [almost] more detailed instructions on requirements for running deepRL network with ViRMEn task
-    - will need to update path issues for: initialize_vr, generate_stimuli, stimulus_trains... and train_info, vr_env in gym_vr, and also the file that sets the data path for the experiment log (currently set to ./Data/data/Raichu...) 
+    - will need to update path issues for: initialize_vr (datapath + saved_info), generate_stimuli, stimulus_trains... and train_info, vr_env in gym_vr
 
 - [done] details on data structures and how they're formatted
 
