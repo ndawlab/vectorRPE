@@ -2,7 +2,7 @@
 import gym
 import numpy as np
 
-from stable_baselines.common.policies import CnnPolicy, MlpLstmPolicy, CnnLstmPolicy
+from stable_baselines.common.policies import CnnPolicy, MlpLstmPolicy, CnnLstmPolicy, FeedForwardPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import A2C
 from stable_baselines.common import set_global_seeds
@@ -23,7 +23,13 @@ import tensorflow as tf
 from stable_baselines.common.tf_layers import conv, linear, conv_to_fc, lstm
 
 
-log_path = './logs/actor_critic/'
+from gym.envs.registration import register
+register(
+    id='vrgym-v0',
+    entry_point='gym_vr.envs:VRShapingEnv',
+)
+
+log_path = './logs/actor_critic_128_64s/'
 env_id = 'vrgym-v0'
 tb_log_name = 'test_try'
 
@@ -81,18 +87,23 @@ checkpoint_callback = CheckpointCallback(save_freq=int(save_freq), save_path=log
 
 num_cpu = 8
 
-policy_kwargs = dict(n_lstm = 128, net_arch = [dict(vf=[64], pi=[64])], cnn_extractor = nature_cnn_best_rewinput)
+# policy_kwargs = dict(n_lstm = 128, net_arch = [dict(vf=[64], pi=[64])], cnn_extractor = nature_cnn_best_rewinput)
 
- 
+ # Custom MLP policy of three layers of size 128 each
+class CnnLstmActorCriticPolicy(CnnLstmPolicy):
+    def __init__(self, *args, **kwargs):
+        super(CnnLstmActorCriticPolicy, self).__init__(n_lstm=128, *args, **kwargs,
+                                           net_arch=['lstm', dict(pi=[64], vf=[64])],
+                                           cnn_extractor=nature_cnn_best_rewinput)
 
 if __name__ == "__main__":
     env = SubprocVecEnv([make_env('vrgym-v0', i) for i in range(num_cpu)])
 
-    model = A2C(CnnLstmPolicy, env, verbose =1, policy_kwargs = policy_kwargs,  
+    model = A2C(CnnLstmActorCriticPolicy, env, verbose =1, 
         learning_rate = 2.5e-4, n_steps=140, 
         tensorboard_log=log_path + 'tensorboard/')
-    # model = A2C.load(load_path, env, verbose = 1, # policy_kwargs = policy_kwargs,  
+    # model = A2C.load(load_path, env, verbose = 1,
     #     learning_rate = 2.5e-4, n_steps=140, 
     #     tensorboard_log=log_path + 'tensorboard/')
-    model.learn(int(6e7),callback = checkpoint_callback)
+    model.learn(int(1e7),callback = checkpoint_callback)
     model.save(log_path + '/final_model')
