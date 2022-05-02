@@ -37,7 +37,7 @@
 %            pred_inds_cell_opt - cell array where each term corresponds to a neuron and contains a cell array where each term has a vector of indices of the predictors that belong to a specific behavioral 
 %                                 variable, updated to reflect the optimal model for the given neuron.
 
-function [relative_contrib,Fstat_mat,full_R2_vec,predicted_gcamp,B_all,Covb_mat, pred_inds_cell_opt] = process_encoding_model(pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach, trial_types_to_match,cont_polydeg_det)
+function [relative_contrib,Fstat_mat,full_R2_vec,predicted_gcamp,B_all,Covb_mat, pred_inds_cell_opt] = process_encoding_model_v2(pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach, trial_types_to_match,cont_polydeg_det)
 if nargin<5
     approach = 'norefit';
 end

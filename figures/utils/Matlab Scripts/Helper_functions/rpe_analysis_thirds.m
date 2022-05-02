@@ -1,4 +1,4 @@
-function  res = rpe_analysis(res_cell,use_prev_rw,do_zscore,cueweights_cell)
+function  res = rpe_analysis_thirds(res_cell,use_prev_rw,do_zscore,cueweights_cell)
 
 if nargin<2
     use_prev_rw=0;
