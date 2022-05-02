@@ -30,7 +30,7 @@ disp(strcat('Saving at:',datapath))
     vr_initial.regiment.sort();   % Alphabetical order of animals
     rng('shuffle')
  
-saved_info = load('.\deepRL_files\train_info_cnnlstm_full_transient_unique_alt.mat');
+saved_info = load('C:\Users\rslee\Documents\GitHub\vectorRPE\virmen\deepRL_files\train_info_cnnlstm_full_transient_unique.mat');
 % todo: include this in the python call? it's just long :/ 
     vr_initial.trainee  = saved_info.info;
 

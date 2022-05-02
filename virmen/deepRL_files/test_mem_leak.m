@@ -10,6 +10,7 @@ screens = zeros(68, 120, num_steps);
 actual_steps = 0;
 % 0 = turn right; 1 = turn left % 2 = move forward/no va change
 % for i = 1:num_steps
+i = 0; 
 while num_trial < 5
     i = i + 1;
     actual_steps = actual_steps + 1;
@@ -27,7 +28,7 @@ while num_trial < 5
     
 
     [vr_status, curr_y_pos, tow_positions] = virmenEngine_step(movement_py);
-    screens(:,:,i) = virmenGetFrame(1);
+    screens(:,:,i) = virmenGetFrame_1dim(1);
     reward = max(0, (vr_status - 1));
     if vr_status == -1
         virmenEndTrial(num_trial, 0)

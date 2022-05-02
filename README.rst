@@ -8,7 +8,8 @@ This repository is being actively updated and organized. Data will be available 
 
 Remaining work include: 
 
-- [in progress] more detailed instructions on requirements for running deepRL network with ViRMEn task
+- [almost] more detailed instructions on requirements for running deepRL network with ViRMEn task
+    - will need to update path issues for: initialize_vr (datapath + saved_info), generate_stimuli, stimulus_trains... and train_info, vr_env in gym_vr
 
 - [done] details on data structures and how they're formatted
 
@@ -42,7 +43,7 @@ Project Organization
     │   ├── Figure 6.ipynb           <- Vector RPE units and DAergic neurons response during outcome period. 
     │   ├── utils                    <- Matlab scripts and functions for recreating figure panels. 
     │
-    ├── gym_vr                       <- Stable Baselines Custom Environment, requires gym 0.14.0 and setting up a custom environment 
+    ├── gym_vr                       <- Stable Baselines Custom Environment, requires gym 0.19.0 and setting up a custom environment 
     │
     ├── virmen                       <- Source code for ViRMEn graphic engine for simulating VR task 
     │
@@ -51,7 +52,7 @@ Project Organization
 Installation Requirements 
 ^^^^^^^^^^^^
 
-ViRMEnand the deep RL code can only be run on a Windows 10 Desktop with Python 3.7+ and MATLAB 2017+. ViRMEn source code is self-contained in the folder, based on the `ViRMEn package <http://pni.princeton.edu/pni-software-tools/virmen-download>`_ (version 2016-2-12). The ``deepRL`` source code for the network requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0). In order to run the deep RL network with the VR task from ViRMEn, you must set up the custom environment ``gym_vr``, which requires the `Open AI gym package <https://github.com/openai/gym>`_ (version 0.14.0) and following these `instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_. You will also need to be able to call MATLAB from python, using `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. 
+ViRMEnand the deep RL code can only be run on a Windows 10 Desktop with Python 3.7+ and MATLAB 2017+. ViRMEn source code is self-contained in the folder, based on the `ViRMEn package <http://pni.princeton.edu/pni-software-tools/virmen-download>`_ (version 2016-2-12). The ``deepRL`` source code for the network requires the `Stable Baselines package <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0). In order to run the deep RL network with the VR task from ViRMEn, you must set up the custom environment ``gym_vr``, which requires the `Open AI gym package <https://github.com/openai/gym>`_ (version 0.19.0) and following these `instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_. You will also need to be able to call MATLAB from python, using `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. 
 
 To install the code for replicating the figures, you will need Python 3.7+, numpy, matplotlib, and scipy. You may also need MATLAB 2017+ in order to replicate the code for analyzing the original neural data from `Engelhard et al. 2019  <https://www.nature.com/articles/s41586-019-1261-9>`_
 
@@ -73,7 +74,7 @@ To install the deep RL network to run on the virmen task, please follow this set
 - **OS**: ViRMEm is currently only supported on Windows 10 Desktop with Python 3.7+. Note that Stable Baselines is not officially supported on PC, but we were able to configure it for a PC. 
 - **CPU**: CPU must be able to support cuda for TensorFlow. 
 - **GPU**: ViRMEn uses OpenGL for rendering graphics, which requires, at minimum, GPU set up for 1024x768 resolution at 120 Hz. The recommended GPU for running ViRMEn are NVIDIA Quadro GPUs. You may try using a lower-end GPU, which likely will lead to ViRMEn rendering the VR environment with less fidelity or in B&W. GPU is also needed for parallel training for the Stable Baseline agent (We used 8 parallel environments). 
-- **Software**: You will need MATLAB 2017+ to run ViRMEn and Python 3.7+ to run Stable Baselines. We used `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0) with Tensorflow (version 1.14.0) (Note: as of bioRxiv publication, Stable Baselines 2.X does not support Tensorflow2.X, and Stable Baselinse3.X, which does use Tensorflow 2.X, did not support the particular deep RL architecture used in this paper). You will also need `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. 
+- **Software**: You will need MATLAB 2017+ to run ViRMEn and Python 3.7+ to run Stable Baselines. We used `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0) with Tensorflow (version 1.14.0) (Note: as of bioRxiv publication, Stable Baselines 2.X did not support Tensorflow2.X, and Stable Baselines3.X, which does use Tensorflow 2.X, did not support the particular deep RL architecture used in this paper). You will also need `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. 
 
 These are PC configurations in which we were able to replicate our training regimen: 
 
@@ -95,16 +96,18 @@ These are PC configurations in which we were able to replicate our training regi
 
 3. Install `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0) and Tensorflow 1.14.0. Check that the installation works well by running the `CartPole problem.  <https://stable-baselines.readthedocs.io/en/master/guide/quickstart.html>`_ You do not need OpenMPI for our agent's deep RL architecture. 
 
-4. Install Gym and Custom Gym Environment ``vr_gym``    
+4. Install Gym (version 0.19.0) and Custom Gym Environment ``vr_gym``  
 
 ::
 
     git clone https://github.com/openai/gym.git
     cd gym
+    git reset --hard cedecb3
     pip install -e .
 
-Next, move the ``gym_vr`` folder from this repo into ``gym\gym\envs`` folder. You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. 
-
+You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e . `` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
+    
+    
 5. Download `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. Make sure to add and save the entire ``virmen`` path from this repo. 
 
 6. Check that the the custom gym environment works by running in python 
