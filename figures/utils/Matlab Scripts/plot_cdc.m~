@@ -41,15 +41,7 @@ for l=1:length(B_all)
 end
 
 all_cue_betas_ordered = all_cue_betas;
-% order is as such: 
-% 1: Contra Cue (Contralateral evidence so far) 
-% 2: Contra Cue (Neutral evidence so far) 
-% 3: Contra cue (Ipsilateral evidence so far) 
-% 4: Ipsi Cue (Contralateral evidence so far) 
-% 5: Ipsi Cue  (Neutral evidence so far) 
-% 6: Ipsi Cue  (Ipsilateral evidence so far) 
-
-
+% or
 
 colormat = [1 0 0;
     0 1 0;
@@ -64,14 +56,13 @@ cue_units = find(sig_all(:,1));
 num_contra = 62; 
 contra_units = cue_units(cues_order(1:num_contra));
 
-load('spline_basis30_int.mat')
-
+load('spline_basis30_int.mat');
+cue_betas_contraCueIpsiaEv = all_cue_betas_ordered(:,15:21)*spline_basis'; 
 cue_betas_contraCueContraEv = all_cue_betas_ordered(:,1:7)*spline_basis';
-cue_betas_contraCueIpsiEv = all_cue_betas_ordered(:,15:21)*spline_basis'; 
 figure;
-errorpatch((1:30)/15,mean(cue_betas_contraCueContraEv(contra_units,:)),std(cue_betas_contraCueContraEv(contra_units,:))/sqrt(num_contra),colormat(1,:));
+errorpatch((1:30)/15,mean(cue_betas_contraCueconrtaEv(contra_units,:)),std(cue_betas_contraCueconrtaEv(contra_units,:))/sqrt(num_contra),colormat(1,:));
 hold on
-errorpatch((1:30)/15,mean(cue_betas_contraCueIpsiEv(contra_units,:)),std(cue_betas_contraCueIpsiEv(contra_units,:))/sqrt(num_contra),colormat(2,:));
+errorpatch((1:30)/15,mean(cue_betas_contraCueipsiEv(contra_units,:)),std(cue_betas_contraCueipsiEv(contra_units,:))/sqrt(num_contra),colormat(2,:));
 
 % with everything 
 figure
@@ -81,9 +72,9 @@ for l=1:6
     errorpatch((1:30)/15,mean(cur_spp),std(cur_spp)/sqrt(num_contra),colormat(l,:));
 end
     
-legend('Contra cue, Contra evidence So far','','Contra cues, Neutral evidence so far',...
-            '','Contra Cue, Ipsi evidence So far ','','Ipsi cues, Contra evidence so far',...
-           '','Ipsi cues, Neutral evidence so far','','Ipsi cues, Ipsi evidence so far')
+legend('Contra cue, Contra evidence So far','','Ipsi Cue, Contra evidence So far ',...
+            '','Contra cues, Neutral evidence so far','','Ipsi cues, Neutral evidence so far',...
+           '','Contra cues, Ipsi evidence so far','','Ipsi cues, Ipsi evidence so far')
     
 
 set(gca,'FontSize',14)
@@ -97,10 +88,7 @@ means_cell = {};
 sems_cell = {};
 figure 
 for l=1:6
-    if l == 2 || l == 5
-        continue
-    end
-    
+     
     hold on
     cur_spp = all_cue_betas_ordered(contra_units,(l-1)*7+1:l*7)*spline_basis';
     errorpatch((1:30)/15,mean(cur_spp),std(cur_spp)/sqrt(num_contra),colormat(l,:));
@@ -120,3 +108,5 @@ xlabel('Time from cue onset (msec)')
 title(['Cue kernels for all contra-ue-responsive neurons (n=', num2str(num_contra), ')'])
 
 time_vector = (1:30)/15;
+
+
