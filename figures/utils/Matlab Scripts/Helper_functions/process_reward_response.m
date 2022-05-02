@@ -26,7 +26,7 @@
 %                               variables except the one being tested. The value of this statistic shoudl be compared to a distirbution of staitsitc values obtained by erforing the same oprateion on shuffled 
 %                               data, directly using the p-value assocaited with the statistic is not valid given the autocorrelations in the data.
 
-function [relative_contrib,Fstat_mat,full_R2_vec, B_all] = process_reward_response(pred_allmat, is_rewarded_trial, neural_act_mat,approach)
+function [relative_contrib,Fstat_mat,full_R2_vec] = process_reward_response(pred_allmat, is_rewarded_trial, neural_act_mat,approach)
 if nargin<5
     approach = 'norefit';
 end
@@ -60,7 +60,7 @@ for cellctr = 1:numcells
     nrw_points = total_points - rw_points;
     cur_weights = (cur_isrw*nrw_points + ~cur_isrw*rw_points)/(rw_points+nrw_points);
     mdl1_w = fitlm(predictors_all(non_nans_inds,:),activity_all(non_nans_inds,cellctr),'Intercept',false,'Weights',cur_weights);
-    [~, Fstat] = coefTest(mdl1_w, [eye(21) zeros(21)]);
+    [~, Fstat] = coefTest(mdl1_w, [eye(7) zeros(7)]);
     Fstat_mat(cellctr,:) = Fstat;
     
     cur_good_trials = 1:find(defined_mat(:,cellctr),1,'last');
@@ -77,13 +77,9 @@ for cellctr = 1:numcells
         train_trials_folds{foldctr} = setdiff(cur_random_vector,test_trials_folds{foldctr});
     end
     
-    
-    [cur_R2,cur_predicted,curB] = get_CV_R2(pred_allmat(cur_good_trials,:),cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),[],approach,is_rewarded_trial);
-    full_R2_vec(cellctr,1) = cur_R2;
-    partial_R2_vec(cellctr,1) =  get_CV_R2(pred_allmat(cur_good_trials,:),cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),1:21,approach,is_rewarded_trial);
-    if nargout>=4
-        B_all{cellctr} = curB;
-    end
+    full_R2_vec(cellctr,1) = get_CV_R2(pred_allmat(cur_good_trials,:),cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),[],approach,is_rewarded_trial);       
+    partial_R2_vec(cellctr,1) =  get_CV_R2(pred_allmat(cur_good_trials,:),cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),1:7,approach,is_rewarded_trial);
+       
 end
 
 cur_R2_diff = (full_R2_vec - partial_R2_vec)./full_R2_vec;

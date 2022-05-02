@@ -15,7 +15,11 @@ end
 
 res_cell_ac_sfn_z=res_cell_ac_sfn;
 
-
+res_cell_ac_sfn_z=res_cell_ac_sfn;
+for l=1:23
+    res_cell_ac_sfn_z(l).whole_trial_activity =...
+        mat2cell(nanzscore(cell2mat(res_cell_ac_sfn(l).whole_trial_activity)),trials_ln_cell{l},size(res_cell_ac_sfn(l).whole_trial_activity{1},2));
+end
 
 
 if ~exist('tmp_cue_kernels_4cues_ConfDiscmNoNeutral_ConIps_z.mat','file')
