@@ -1,7 +1,8 @@
 % drop_type: 'norefit' - calculate regression weights with the full model, then zero the weights correspoding to the predictors being dropped
 % drop_type: 'refit'   - calculate regression weights without the weights correspoding to the predictors being dropped (partial model)
-
-function [R2,all_predicted, B_all, covb] = get_CV_R2(full_predmat_cell,cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec,inds_to_drop,drop_type,trial_types_to_match)
+% alt version to go with process_reward_response_alt + process_encoding_model_v2 main difference is
+% that it outputs B_all and covb
+function [R2,all_predicted, B_all, covb] = get_CV_R2_alt (full_predmat_cell,cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec,inds_to_drop,drop_type,trial_types_to_match)
 
 if nargin<6
     inds_to_drop=[];

@@ -1,4 +1,4 @@
-function  res = rpe_analysis(res_cell,use_prev_rw,do_zscore,cueweights_cell)
+function  res = rpe_analysis_thirds(res_cell,use_prev_rw,do_zscore,cueweights_cell)
 
 if nargin<2
     use_prev_rw=0;
@@ -40,8 +40,8 @@ for fctr = 1:length(res_cell)
     %find hard and easy trials
     cur_is_succ = res_cell(fctr).is_succ_gd';
     good_trials = find(cur_is_succ);
-    outcome_resp2 = outcome_resp2(:,:,good_trials);
     if ~use_prev_rw %trials difficulty
+        outcome_resp2 = outcome_resp2(:,:,good_trials);
         clear sumC
         for l=1:numtrials
             for k=1:cueweight_bins
@@ -70,9 +70,10 @@ for fctr = 1:length(res_cell)
         easy_trials_inds = find(AdifT_wt > 10);
         
     else %previous outcome
-        cur_prev_succ = res_cell(fctr).prev_issucc_gd(good_trials);
-        hard_trials_inds = find(~cur_prev_succ);
-        easy_trials_inds = find(cur_prev_succ);
+        
+        cur_is_succ = res_cell(fctr).is_succ_gd';
+        hard_trials_inds = find(cur_is_succ);
+        easy_trials_inds = find(~cur_is_succ);
     end
     
     

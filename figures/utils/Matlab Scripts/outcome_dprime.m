@@ -1,4 +1,4 @@
-% Figure 5
+% Figure 6
 clear all 
 load res_cell_ac_sfn
 

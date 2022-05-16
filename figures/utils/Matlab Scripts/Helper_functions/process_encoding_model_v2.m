@@ -7,7 +7,8 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% process_encoding_model_v2.m: NOT the same as the original
+%%% process_encoding_model_v2.m: NOT the same as the original. Main
+%%% difference is it outputs B_all and pred_inds_cell_opt
 %%% process_encoding model in the witten lab cup! 
 %%%
 %%% Description: Process the encoding model on a matrix of predictors belonging to different behavioral variables and a matrix of neural activity traces correspoding to one or more neurons. return the relative
@@ -36,7 +37,7 @@
 %            pred_inds_cell_opt - cell array where each term corresponds to a neuron and contains a cell array where each term has a vector of indices of the predictors that belong to a specific behavioral 
 %                                 variable, updated to reflect the optimal model for the given neuron.
 
-function [relative_contrib,Fstat_mat,full_R2_vec,predicted_gcamp,B_all,Covb_mat, pred_inds_cell_opt] = process_encoding_model(pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach, trial_types_to_match,cont_polydeg_det)
+function [relative_contrib,Fstat_mat,full_R2_vec,predicted_gcamp,B_all,Covb_mat, pred_inds_cell_opt] = process_encoding_model_v2(pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach, trial_types_to_match,cont_polydeg_det)
 if nargin<5
     approach = 'norefit';
 end
@@ -140,7 +141,7 @@ for cellctr = 1:numcells
                 [cur_R2,cur_predicted] = get_CV_R2(full_predmat_cell,cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),[],approach,trial_types_to_match);
             else
                 
-                [cur_R2,cur_predicted,curB, covB] = get_CV_R2(full_predmat_cell,cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),[],approach,trial_types_to_match);
+                [cur_R2,cur_predicted,curB, covB] = get_CV_R2_alt(full_predmat_cell,cur_neural_act_mat,test_trials_folds,train_trials_folds,trial_length_vec(cur_good_trials),[],approach,trial_types_to_match);
               
                 weights_reg_cell{degctr} = curB;
                 weights_covb_cell{degctr} = covB;

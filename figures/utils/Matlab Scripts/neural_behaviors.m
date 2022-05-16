@@ -89,7 +89,7 @@ rel_contrib = [rel_contrib_all rel_contrib_all_rw];
 term_names{end+1} = 'reward_response';
 save([folder_interim,'relcon_all.mat'],'rel_contrib','sesscellnum','term_names')
 
-%%
+
 
 
 %%% get averaged activity
@@ -178,14 +178,14 @@ cla
 order=pos_order;
 cellnum = 56;
 mr = meanstr_all_sig.pos;
-mr=mr-repmat(min(mr,[],2),1,size(mr,2));
-norm_rate = repmat(max(mr,[],2),1,size(mr,2));
-mr=mr./norm_rate;
+% mr=mr-repmat(min(mr,[],2),1,size(mr,2));
+% norm_rate = repmat(max(mr,[],2),1,size(mr,2));
+% mr=mr./norm_rate;
 
 sr = stdstr_all_sig.pos;
 lr = lenstr_all_sig.pos;
 pos_ex = mr(order(cellnum),:);
-pos_ex_se = sr(order(cellnum),:)./sqrt(lr(order(cellnum),:))./norm_rate(order(cellnum),:);
+pos_ex_se = sr(order(cellnum),:)./sqrt(lr(order(cellnum),:)); % ./norm_rate(order(cellnum),:);
 errorpatch(centersstr_all.pos(1,:),pos_ex, pos_ex_se,[0.2 0.2 0.2],2,-1); shg
 xlabel('Position (cm)')
 ylabel('\DeltaF/F')
@@ -253,8 +253,6 @@ set(gca,'Fontsize',14,'FontName','Arial')
 
 
 %% cues
-clearvars -except lenside_all sig_all res_cell_ac_sfn
-load folder_list base_folder folder_fulltraces folder_interim folder_shuffled
 
 for l=1:23
     numtrials = length(res_cell_ac_sfn(l).ypos_cell_gd);
@@ -270,9 +268,10 @@ for l=1:23
         mat2cell(nanzscore(cell2mat(res_cell_ac_sfn(l).whole_trial_activity)),trials_ln_cell{l},size(res_cell_ac_sfn(l).whole_trial_activity{1},2));
 end
 
-if ~exist('tmp_cue_kernels_4cues_ConIps.mat','file')
+if ~exist('tmp_cue_kernels_4cues_ConIps_z.mat','file')
     [rel_contrib_all,Fstat_all,R2_all,sesscellnum,term_names,res_cell_predicted,B_all,CovB_mat,pred_inds_cell_all] = process_all_sessions_tmp_4cues_ConIps(res_cell_ac_sfn_z,'cue','norefit');
-    save([folder_interim,'tmp_cue_kernels_4cues_ConIps_z.mat'],'B_all','CovB_mat')
+
+save tmp_cue_kernels_4cues_ConIps_z
 else
     load tmp_cue_kernels_4cues_ConIps_z
 end

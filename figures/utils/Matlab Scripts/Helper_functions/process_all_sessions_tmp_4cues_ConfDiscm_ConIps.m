@@ -40,7 +40,7 @@ for sessctr = 1:numsessions
     disp(['Now processing session #',num2str(sessctr),' of ',num2str(numsessions)])
     if ~strcmp(period,'outcome')
         if ~onpcaflag
-            [relative_contrib,Fstat_mat,R2_vec,predicted_gcamp,B_vec,pred_inds_cell_opt] = process_encoding_model_v2  (pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach);
+            [relative_contrib,Fstat_mat,R2_vec,predicted_gcamp,B_vec,~,pred_inds_cell_opt] = process_encoding_model_v2  (pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach);
         else
             [relative_contrib,Fstat_mat,R2_vec,predicted_gcamp,B_vec] = process_encoding_model_onpca(pred_allmat, pred_inds_cell, neural_act_mat, pred_types_cell,approach);
             
