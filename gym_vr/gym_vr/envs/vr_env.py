@@ -3,7 +3,6 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import matlab.engine
-# from gym.utils import # something is missing here! dammit this is why i need git!
 import multiprocessing as mp
 import scipy.io
 import random
@@ -44,7 +43,6 @@ class VRShapingEnv(gym.Env):
 
   def step(self, action):
     done = False
-    reward_signal = np.zeros((1, 120))
 
     movement_py = [0, 0, -1, 0, 12.5]
     if action < 2:
@@ -84,7 +82,7 @@ class VRShapingEnv(gym.Env):
     else:
       # gets the output 
       # 
-      screen = self.eng.virmenGetFrame_1dim(1, nargout =1)
+      screen = self.eng.virmenGetFrame(1, nargout =1)
       screen = np.array(screen._data).reshape(screen.size[::-1]).T
       # gives one-hot with first two entries denoting no-rew, rew
       rew_info =  np.eye(120)[int(vr_status - 1)]
@@ -101,19 +99,27 @@ class VRShapingEnv(gym.Env):
 
     
     screen = np.zeros((69, 120, 1))
+
     self.eng.virmen_renderWorld(nargout = 0)
+
+    screen = self.eng.virmenGetFrame(1, nargout =1)
+    screen = np.array(screen._data).reshape(screen.size[::-1]).T
+    # gives one-hot with first two entries denoting no-rew, rew
+    rew_info =  np.eye(120)[0]
+    screen = np.expand_dims(np.vstack((screen, rew_info)) , 2)
+
     curr_time = time.time()
     self.curr_y_pos = 0
     self.post_trial_curr_step = 0
 
 
-    if ((curr_time - self.start_time) > 10000) and self.eng.check_save_progress(nargout = 1): # around 3 hours. i'll want to test that this actually clears the memory and can actually clear the process
+    if ((curr_time - self.start_time) > 13600) and self.eng.check_save_progress(nargout = 1): # around 3 hours. i'll want to test that this actually clears the memory and can actually clear the process
 
       self.eng.drawnow(nargout = 0)
       self.eng.virmenOpenGLRoutines(2, nargout = 0)
       self.eng.quit()
       self.eng = matlab.engine.start_matlab()
-      path = r'C:\\Users\\witten_goat\\Documents\\tankmousevr\\rachel\\stimulus_trains_PoissonBlocks_cnnlstm_small_transient_unique.mat'
+      path = r'C:\\Users\\rslee\\Documents\\GitHub\\vectorRPE\\virmen\\deepRL_files\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
       if curr_time - os.path.getmtime(path) > 3600: # created more than an hour ago. prevents multiple threads to re-generate
         self.eng.generate_stimuli(nargout=0)
       self.eng.initializeVR(nargout=0) #self.tow_pos = 
@@ -127,14 +133,14 @@ class VRShapingEnv(gym.Env):
     return screen
 
   def render(self, mode='human', close=False):
-    # screen = self.eng.virmenGetFrame_1dim(1, nargout =1) # np.array()
+    # screen = self.eng.virmenGetFrame(1, nargout =1) # np.array()
 
     # screen = np.expand_dims(np.array(screen._data).reshape(screen.size[::-1]).T, 2)    
 
     return
 
 def get_images(self):
-    screen = np.vstack((self.eng.virmenGetFrame_1dim(1, nargout =1), np.zeros((1,120)))) 
+    screen = np.vstack((self.eng.virmenGetFrame(1, nargout =1), np.zeros((1,120)))) 
 
     screen = np.expand_dims(np.array(screen._data).reshape(screen.size[::-1]).T, 2)    
     return screen
@@ -143,4 +149,3 @@ def get_images(self):
 def seed(self, seed=None):
     self.np_random, seed = seeding.np_random(seed)
     return [seed]
-
