@@ -11,10 +11,10 @@ global vr
 
 
 %       % pulled from intertrial
-% % LOGGING
+% % % LOGGING
 vr.logger.logEnd(vr)
 vr.logger.logExtras(vr, vr.rewardFactor, trial, pid);
-% % % 
+% % % % 
 % %
 vr.state              = BehavioralState.SetupTrial;
 if ~RigParameters.hasDAQ
