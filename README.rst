@@ -94,9 +94,9 @@ These are PC configurations in which we were able to replicate our training regi
 
 2. First make sure that ViRMEn works. After cloning the repo, run ``virmen\deepRL_files\test_mem_leak.m``. If working correctly, ViRMEn should launch, you should be able to see the virtual agent run down the maze, and MATLAB should output the final decision of the agent. 
 
-3. Install `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0) and Tensorflow 1.14.0. Check that the installation works well by running the `CartPole problem.  <https://stable-baselines.readthedocs.io/en/master/guide/quickstart.html>`_ You do not need OpenMPI for our agent's deep RL architecture. 
 
-4. Install Gym (version 0.19.0) and Custom Gym Environment ``vr_gym``  
+
+3. Install Gym (version 0.19.0) and Custom Gym Environment ``vr_gym``  
 
 ::
 
@@ -108,6 +108,9 @@ These are PC configurations in which we were able to replicate our training regi
 You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e . `` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
     
     
+4. Install `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.0) and Tensorflow 1.14.0. Check that the installation works well by running the `CartPole problem.  <https://stable-baselines.readthedocs.io/en/master/guide/quickstart.html>`_ You do not need OpenMPI for our agent's deep RL architecture. 
+
+
 5. Download `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. Make sure to add and save the entire ``virmen`` path from this repo. 
 
 6. Check that the the custom gym environment works by running in python 
