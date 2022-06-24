@@ -94,7 +94,7 @@ These are PC configurations in which we were able to replicate our training regi
 
 2. First make sure that ViRMEn works. After cloning the repo, run ``virmen\deepRL_files\test_mem_leak.m``. If working correctly, ViRMEn should launch, you should be able to see the virtual agent run down the maze, and MATLAB should output the final decision of the agent. 
 
-3. Install `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.1) and Tensorflow 1.14.0. Check that the installation works well by running the `CartPole problem.  <https://stable-baselines.readthedocs.io/en/master/guide/quickstart.html>`_ You do not need OpenMPI for our agent's deep RL architecture. 
+3. Install `Stable Baselines <https://stable-baselines.readthedocs.io/en/master/guide/install.html>`_ (version 2.10.1) and Tensorflow 1.14.0. You do not need OpenMPI for our agent's deep RL architecture. 
 
 4. Install Gym (version 0.19.0) and Custom Gym Environment ``vr_gym``  
 
@@ -105,7 +105,7 @@ These are PC configurations in which we were able to replicate our training regi
     git reset --hard cedecb3
     pip install -e .
 
-You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e . `` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
+Check that the installation works well by running the `CartPole problem.  <https://stable-baselines.readthedocs.io/en/master/guide/quickstart.html>`_
     
     
 5. Download `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. Make sure to add and save the entire ``virmen`` path from this repo. 
@@ -123,9 +123,14 @@ You will want to follow `these instructions <https://www.gymlibrary.ml/pages/env
     env = gym.make('vrgym-v0')
     
 
-If you received an error ``gym.error.NameNotFound: Environment `vrgym` doesn't exist.`` then you likely did not register the custom environment correctly. 
+You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e .`` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
+ 
+ 
+ If you received an error ``gym.error.NameNotFound: Environment `vrgym` doesn't exist.`` then you likely did not register the custom environment correctly. 
 
 If you received an error related to the MATLAB code, you may need to add the correct pathway in MATLAB or ensure that all the pathways in ViRMEn are correctly specified and saved. 
+
+
 
 7. To run and train the network, you'll want to run ``deepRL\custom_cnn_lstm.py``. It is recommended to also have ``tensorboard (version 1.14.0)`` to keep track of the agent's performance. After training, you can use ``evaluate_policies.ipynb`` to evaluate the trained network with frozen weights. 
 
