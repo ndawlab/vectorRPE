@@ -16,6 +16,7 @@ Remaining work include:
 - requirement files for figure analyses and deep RL agent [just output the .yml] 
 
 - [in progress] all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
+    - missing matlab script for timelock_to_cues. should add that in 
 
 Work before publishing:
 
