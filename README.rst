@@ -111,7 +111,10 @@ Check that the installation works well by running the `CartPole problem.  <https
     
 5. Download `Matlab Engine API for Python <https://www.mathworks.com/help/matlab/matlab-engine-for-python.html?s_tid=CRUX_lftnav>`_. Make sure to add and save the entire ``virmen`` path from this repo. 
 
-6. Check that the the custom gym environment works by running in python 
+6. You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e .`` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
+
+
+Check that the the custom gym environment works by running in python 
 
 ::
 
@@ -124,10 +127,9 @@ Check that the installation works well by running the `CartPole problem.  <https
     env = gym.make('vrgym-v0')
     
 
-You will want to follow `these instructions <https://www.gymlibrary.ml/pages/environment_creation/#example-custom-environment>`_ to properly register for the environment. In particular, you will want to run: ``pip install -e .`` in the folder ``vectorRPE\gymvr``. Any time you edit the code in ``gymvr``, you will need to rerun that command to update the ``vr_gym`` environment. 
+
  
- 
- If you received an error ``gym.error.NameNotFound: Environment `vrgym` doesn't exist.`` then you likely did not register the custom environment correctly. 
+If you received an error ``gym.error.NameNotFound: Environment `vrgym` doesn't exist.`` then you likely did not register the custom environment correctly. 
 
 If you received an error related to the MATLAB code, you may need to add the correct pathway in MATLAB or ensure that all the pathways in ViRMEn are correctly specified and saved. 
 
