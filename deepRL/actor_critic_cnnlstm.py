@@ -29,7 +29,7 @@ register(
     entry_point='gym_vr.envs:VRShapingEnv',
 )
 
-log_path = './logs/actor_critic_128_64s/'
+log_path = './logs/actor_critic_netarch/'
 env_id = 'vrgym-v0'
 tb_log_name = 'test_try'
 
@@ -85,15 +85,20 @@ def nature_cnn_best_rewinput(processed_obs, **kwargs):
 checkpoint_callback = CheckpointCallback(save_freq=int(save_freq), save_path=log_path + 'checkpoints/',
                                          name_prefix='rl_model') 
 
-num_cpu = 8
+num_cpu = 2
+
 
 # policy_kwargs = dict(n_lstm = 128, net_arch = [dict(vf=[64], pi=[64])], cnn_extractor = nature_cnn_best_rewinput)
 
- # Custom MLP policy of three layers of size 128 each
 class CnnLstmActorCriticPolicy(CnnLstmPolicy):
+    # def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm=128, reuse=False, **_kwargs):
+    #     super().__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm, reuse,
+    #                      net_arch=['lstm', dict(vf=[40], pi=[40])],
+    #                      cnn_extractor=nature_cnn_best_rewinput, **_kwargs)
+
     def __init__(self, *args, **kwargs):
         super(CnnLstmActorCriticPolicy, self).__init__(n_lstm=128, *args, **kwargs,
-                                           net_arch=['lstm', dict(pi=[64], vf=[64])],
+                                           net_arch=['lstm', dict(pi=[40], vf=[40])],
                                            cnn_extractor=nature_cnn_best_rewinput)
 
 if __name__ == "__main__":
@@ -105,5 +110,5 @@ if __name__ == "__main__":
     # model = A2C.load(load_path, env, verbose = 1,
     #     learning_rate = 2.5e-4, n_steps=140, 
     #     tensorboard_log=log_path + 'tensorboard/')
-    model.learn(int(1e7),callback = checkpoint_callback)
+    model.learn(int(1000),callback = checkpoint_callback)
     model.save(log_path + '/final_model')
