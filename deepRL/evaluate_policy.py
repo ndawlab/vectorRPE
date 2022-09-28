@@ -16,7 +16,6 @@ import pdb
 from stable_baselines.bench import Monitor
 import os
 import subprocess
-import supervised_utils
 from stable_baselines.common.vec_env import VecEnv
 
 import os
@@ -87,7 +86,62 @@ def evaluate_policy_more(model, env, n_eval_episodes=10,
     if return_episode_rewards:
         return np.squeeze(episode_rewards), np.squeeze(episode_lengths), np.squeeze(ep_tow_counts)
     return mean_reward, std_reward
+from stable_baselines.common.vec_env import VecEnv
 
+# Tanh_2 gives us the ACTION features, Tanh_3 gives us the VALUE features
+# concat_2 still gives us the overall features 
+def get_a2c_model_data(model, env, n_eval_episodes=10, by_ep = False, obses_ep_saved = 10):
+    if isinstance(env, VecEnv):
+        assert env.num_envs == 1, "You must pass only one environment when using this function"
+
+    actions, rewards, obses, feats, featsPI, featsV, terms, vs, tow_counts = [], [], [], [], [], [], [], [], []
+    episode_lengths = np.zeros((n_eval_episodes))
+    [graph, sess] = model.get_graph_and_sess()
+    state_ph_shape = graph.get_tensor_by_name("input_1/states_ph:0").shape
+    dones_ph_shape = graph.get_tensor_by_name("input_1/dones_ph:0").shape
+    for ep in range(n_eval_episodes):
+        obs = env.reset()
+        done = np.zeros((dones_ph_shape))
+        state = np.zeros((state_ph_shape))
+        episode_length = 0
+
+        while not done:
+
+            if ep < obses_ep_saved:
+                obses.append(obs)
+            feats.append(graph.get_tensor_by_name("model/concat_2:0").eval(
+                {"input/Ob:0":obs, "input_1/dones_ph:0":done
+                , "input_1/states_ph:0":state}, session = sess))
+            featsPI.append(graph.get_tensor_by_name("model/Tanh_2:0").eval(
+                {"input/Ob:0":obs, "input_1/dones_ph:0":done
+                , "input_1/states_ph:0":state}, session = sess))
+            featsV.append(graph.get_tensor_by_name("model/Tanh_3:0").eval(
+                {"input/Ob:0":obs, "input_1/dones_ph:0":done
+                , "input_1/states_ph:0":state}, session = sess))
+            vs.append(model.value(obs, state = state, mask = done))
+            action, state = model.predict(obs, state=state)
+            actions.append(action)
+            obs, reward, done, info = env.step(action)
+            rewards.append(reward)
+            terms.append(done[0])
+            tows = np.copy(info[0]['tow_counts'])
+            tow_counts.append(tows)
+            episode_length += 1
+            
+
+
+        episode_lengths[ep] = episode_length
+    all_metrics = [actions, rewards, feats, featsPI, featsV, terms, vs, tow_counts]
+    if by_ep:
+        ep_idx = np.cumsum(episode_lengths)[:-1].astype(int)
+        [actions, rewards, feats, featsPI, featsV, terms, vs, tow_counts] = [np.split(np.squeeze(x), ep_idx, axis = 0) for x in all_metrics]
+        obses = np.split(np.squeeze(obses), ep_idx[:obses_ep_saved], axis = 0)
+    else:
+        [actions, rewards, feats, featsPI, featsV,terms, vs, tow_counts] = [np.squeeze(x) for x in all_metrics]
+        obses = np.squeeze(obses)
+    return [actions, rewards, obses, feats, featsPI, featsV, terms, vs, tow_counts, episode_lengths]
+
+        
 
 # Relu_3 is feature output (not including the rewinfo for the custom cnn lstm. for that, it's Reshape_1) 
 # concat_1 is the lstm output for cnnlstm; concat_2 for custom cnn lstm 
@@ -138,8 +192,7 @@ def get_model_data(model, env, n_eval_episodes=10, by_ep = False, obses_ep_saved
         [actions, rewards, feats, terms, vs, tow_counts, ypositions] = [np.squeeze(x) for x in all_metrics]
         obses = np.squeeze(obses)
     return [actions, rewards, obses, feats,  terms, vs, tow_counts, episode_lengths, ypositions]
-
-    
+        
 
 def run_down_track(model, env, n_eval_episodes=10, by_ep = False):
 
@@ -224,16 +277,16 @@ def make_env(env_id, rank, seed=0):
 
 
 
-num_cpu = 1
+# num_cpu = 1
 
-policy_kwargs = dict(n_lstm=64, cnn_extractor = supervised_utils.nature_cnn_best)
+# policy_kwargs = dict(n_lstm=64, cnn_extractor = supervised_utils.nature_cnn_best)
 
 
-if __name__ == "__main__":
-    env = SubprocVecEnv([make_env('vrgym-v0', i) for i in range(num_cpu)])
-    model = A2C(CnnLstmPolicy, env, verbose =1, policy_kwargs = policy_kwargs,  
-            learning_rate = 2.5e-4, n_steps=180)
+# if __name__ == "__main__":
+#     env = SubprocVecEnv([make_env('vrgym-v0', i) for i in range(num_cpu)])
+#     model = A2C(CnnLstmPolicy, env, verbose =1, policy_kwargs = policy_kwargs,  
+#             learning_rate = 2.5e-4, n_steps=180)
 
-    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=100)
+#     mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=100)
 
-    print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+#     print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
