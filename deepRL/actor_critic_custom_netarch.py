@@ -2,7 +2,7 @@
 import gym
 
 import numpy as np
-from stable_baselines.common.policies import CnnPolicy, MlpLstmPolicy, CnnLstmPolicy, nature_cnn
+from stable_baselines.common.policies import CnnPolicy, LstmPolicy, RecurrentActorCriticPolicy, MlpLstmPolicy, CnnLstmPolicy, nature_cnn
 from stable_baselines.common.policies import ActorCriticPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import A2C
@@ -30,7 +30,7 @@ register(
     entry_point='gym_vr.envs:VRShapingEnv',
 )
 
-log_path = './logs/test2/'
+log_path = './logs/buggymodelscope/'
 env_id = 'vrgym-v0'
 tb_log_name = 'test_try'
 
@@ -91,28 +91,30 @@ num_cpu = 2
 # policy_kwargs = dict(n_lstm=64, cnn_extractor = nature_cnn_best_rewinput)
 
 
-class CustomPolicy(CnnLstmPolicy):
+class Custom_CnnLstm(RecurrentActorCriticPolicy):
 
 	def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm=128, reuse=False, layer_norm=False, cnn_extractor=nature_cnn_best_rewinput, feature_extraction="cnn", **_kwargs):
 		
-		super(CustomPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm, reuse, **_kwargs)
+		super(Custom_CnnLstm, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, 
+									  	     state_shape=(2 * n_lstm, ), reuse = reuse, scale=(feature_extraction == "cnn"))
 	
-
-
-		with tf.variable_scope("model2", reuse=reuse): # ASHLEY: cannot be named "model" or I hit an error
+		# pdb.set_trace()
+		with tf.variable_scope("model", reuse=reuse):
 
 			if feature_extraction == "cnn":
-				latent = cnn_extractor(self.processed_obs, **_kwargs)
+				latent = cnn_extractor(self.processed_obs, **_kwargs) # hits ValueError here with pdb
 				latent = tf.layers.flatten(latent)
 			else:
 				latent = tf.layers.flatten(self.processed_obs)
-
-			policy_only_layers = [64]  # Layer sizes of the network that only belongs to the policy network
-			value_only_layers = [64]  # Layer sizes of the network that only belongs to the value network
+			
+			net_arch=['lstm', dict(pi=[40], vf=[40])]
+			policy_only_layers = []  # Layer sizes of the network that only belongs to the policy network
+			value_only_layers = []  # Layer sizes of the network that only belongs to the value network
 
 	        # Iterate through the shared layers and build the shared parts of the network
 			lstm_layer_constructed = False
-			for idx, layer in enumerate(['lstm']):
+			# pdb.set_trace()
+			for idx, layer in enumerate(net_arch):
 				if isinstance(layer, int): # Check that this is a shared layer
 					layer_size = layer
 					latent = tf.tanh(linear(latent, "shared_fc{}".format(idx), layer_size, init_scale=np.sqrt(2)))
@@ -160,21 +162,21 @@ class CustomPolicy(CnnLstmPolicy):
 			self._proba_distribution, self._policy, self.q_value = \
 				self.pdtype.proba_distribution_from_latent(latent_policy, latent_value)
 	
-		# self._setup_init()
+		self._setup_init()
 
-	# def step(self, obs, state=None, mask=None, deterministic=False):
-	# 	if deterministic:
-	# 		return self.sess.run([self.deterministic_action, self.value_flat, self.snew, self.neglogp],
- #                                 {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
-	# 	else:
-	# 		return self.sess.run([self.action, self.value_flat, self.snew, self.neglogp],
- #                                 {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
+	def step(self, obs, state=None, mask=None, deterministic=False):
+		if deterministic:
+			return self.sess.run([self.deterministic_action, self.value_flat, self.snew, self.neglogp],
+                                 {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
+		else:
+			return self.sess.run([self.action, self.value_flat, self.snew, self.neglogp],
+                                 {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
 
-	# def proba_step(self, obs, state=None, mask=None):
-	# 	return self.sess.run(self.policy_proba, {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
+	def proba_step(self, obs, state=None, mask=None):
+		return self.sess.run(self.policy_proba, {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
 
-	# def value(self, obs, state=None, mask=None):
-	# 	return self.sess.run(self.value_flat, {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
+	def value(self, obs, state=None, mask=None):
+		return self.sess.run(self.value_flat, {self.obs_ph: obs, self.states_ph: state, self.dones_ph: mask})
     
 
 #CNN retrain 
@@ -182,7 +184,7 @@ class CustomPolicy(CnnLstmPolicy):
 if __name__ == "__main__":
     env = SubprocVecEnv([make_env('vrgym-v0', i) for i in range(num_cpu)])
 
-    model = A2C(CustomPolicy, env, verbose =1, 
+    model = A2C(Custom_CnnLstm, env, verbose =1, 
         learning_rate = 2.5e-4, n_steps=140,
         tensorboard_log=log_path + 'tensorboard/')
     # model = A2C.load(load_path, env, verbose = 1,
