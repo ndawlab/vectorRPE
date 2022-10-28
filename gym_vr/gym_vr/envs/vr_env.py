@@ -17,11 +17,14 @@ class VRShapingEnv(gym.Env):
   def __init__(self):
     # self.seed()
     # Define action and observation space
-    # They must be gy   m.spaces objects
+    # They must be gym.spaces objects
     self.action_space = spaces.Discrete(3)
     # Example for using image as input:
-    self.observation_space = spaces.Box(low=0, high=1, shape=
-                    (69, 120, 1), dtype=float) # original (1080,1920) (540, 960)(68, 120, 1)
+    # self.observation_space = spaces.Box(low=0, high=1, shape=
+    #                 (69, 120, 1), dtype=float) # original (1080,1920) (540, 960)(68, 120, 1)
+
+    self.observation_space = spaces.Box(low=0, high=255,
+                                            shape=(1, 120, 120), dtype = float) # dtype=np.uint8)
  
     self.eng = matlab.engine.start_matlab()
     self.eng.initializeVR(nargout=0) # self.tow_pos = 
@@ -36,9 +39,9 @@ class VRShapingEnv(gym.Env):
     self.post_trial_curr_step = 0
     self.POST_TRIAL_STEP = 8
 
-    path = r'C:\\Users\\rslee\\Documents\\GitHub\\vectorRPE\\virmen\\deepRL_files\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
-    if time.time() - os.path.getmtime(path) > 3600: # created more than an hour ago. prevents multiple threads to re-generate
-      self.eng.generate_stimuli(nargout=0)
+    # path = r'C:\Users\witten_goat\Documents\vectorRPE\virmen\deepRL_files\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
+    # if time.time() - os.path.getmtime(path) > 3600: # created more than an hour ago. prevents multiple threads to re-generate
+    #   self.eng.generate_stimuli(nargout=0)
 
 
   def step(self, action):
@@ -59,7 +62,7 @@ class VRShapingEnv(gym.Env):
         self.eng.virmenEndTrial(self.trial, self.thread_id, nargout=1)
         self.trial = self.trial + 1
         
-      return (screen, reward, done, {'tow_counts':self.tow_counts,'y_pos':self.curr_y_pos} )
+      return (screen.astype(np.uint8), reward, done, {'tow_counts':self.tow_counts,'y_pos':self.curr_y_pos} )
 
 
     movement = matlab.double(movement_py)
@@ -88,7 +91,7 @@ class VRShapingEnv(gym.Env):
       rew_info =  np.eye(120)[int(vr_status - 1)]
       screen = np.expand_dims(np.vstack((screen, rew_info)) , 2)
 
-    return (screen, reward, done, {'tow_counts':self.tow_counts,'y_pos':self.curr_y_pos} )
+    return (screen.astype(np.uint8), reward, done, {'tow_counts':self.tow_counts,'y_pos':self.curr_y_pos} )
   
   def close(self):
     self.eng.drawnow(nargout=0)
@@ -98,7 +101,7 @@ class VRShapingEnv(gym.Env):
   def reset(self):
 
     
-    screen = np.zeros((69, 120, 1))
+    screen = np.zeros((69, 120, 1), dtype=np.uint8)
 
     self.eng.virmen_renderWorld(nargout = 0)
 
@@ -119,7 +122,7 @@ class VRShapingEnv(gym.Env):
       self.eng.virmenOpenGLRoutines(2, nargout = 0)
       self.eng.quit()
       self.eng = matlab.engine.start_matlab()
-      path = r'C:\\Users\\rslee\\Documents\\GitHub\\vectorRPE\\virmen\\deepRL_files\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
+      path = r'C:\\Users\\witten_goat\\Documents\\vectorRPE\\virmen\\deepRL_files\\stimulus_trains_PoissonBlocks_cnnlstm_full_transient_unique.mat'
       if curr_time - os.path.getmtime(path) > 3600: # created more than an hour ago. prevents multiple threads to re-generate
         self.eng.generate_stimuli(nargout=0)
       self.eng.initializeVR(nargout=0) #self.tow_pos = 
@@ -130,7 +133,7 @@ class VRShapingEnv(gym.Env):
 
       self.start_time = time.time() # restart counter.
 
-    return screen
+    return screen.astype(np.uint8)
 
   def render(self, mode='human', close=False):
     # screen = self.eng.virmenGetFrame(1, nargout =1) # np.array()

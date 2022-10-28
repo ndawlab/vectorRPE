@@ -28,7 +28,7 @@ while num_trial < 5
     
 
     [vr_status, curr_y_pos, tow_positions] = virmenEngine_step(movement_py);
-    screens(:,:,i) = virmenGetFrame_1dim(1);
+    screens(:,:,i) = virmenGetFrame(1);
     reward = max(0, (vr_status - 1));
     if vr_status == -1
         virmenEndTrial(num_trial, 0)

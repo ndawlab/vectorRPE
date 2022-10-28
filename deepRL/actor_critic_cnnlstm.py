@@ -2,7 +2,7 @@
 import gym
 import numpy as np
 
-from stable_baselines.common.policies import CnnPolicy, MlpLstmPolicy, CnnLstmPolicy, FeedForwardPolicy
+from stable_baselines.common.policies import CnnPolicy, MlpPolicy, MlpLstmPolicy, CnnLstmPolicy, FeedForwardPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import A2C
 from stable_baselines.common import set_global_seeds
@@ -104,7 +104,7 @@ class CnnLstmActorCriticPolicy(CnnLstmPolicy):
 if __name__ == "__main__":
     env = SubprocVecEnv([make_env('vrgym-v0', i) for i in range(num_cpu)])
 
-    model = A2C(CnnLstmActorCriticPolicy, env, verbose =1, 
+    model = A2C(MlpPolicy, env, verbose =1, 
         learning_rate = 2.5e-4, n_steps=140, 
         tensorboard_log=log_path + 'tensorboard/')
     # model = A2C.load(load_path, env, verbose = 1,

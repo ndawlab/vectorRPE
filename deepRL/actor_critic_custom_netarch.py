@@ -2,19 +2,19 @@
 import gym
 
 import numpy as np
-from stable_baselines.common.policies import CnnPolicy, LstmPolicy, RecurrentActorCriticPolicy, MlpLstmPolicy, CnnLstmPolicy, nature_cnn
-from stable_baselines.common.policies import ActorCriticPolicy
-from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines import A2C
-from stable_baselines.common import set_global_seeds
-from stable_baselines.common.env_checker import check_env
-from stable_baselines.common.callbacks import CheckpointCallback
-from stable_baselines.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
-from stable_baselines.logger import configure
-from   stable_baselines.common.callbacks import BaseCallback
-from stable_baselines.common.evaluation import evaluate_policy
+from stable_baselines3.common.policies import CnnPolicy, LstmPolicy, RecurrentActorCriticPolicy, MlpLstmPolicy, CnnLstmPolicy, nature_cnn
+from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines3 import A2C
+from stable_baselines3.common import set_global_seeds
+from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
+from stable_baselines3.logger import configure
+from   stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.evaluation import evaluate_policy
 import pdb 
-from stable_baselines.bench import Monitor
+from stable_baselines3.bench import Monitor
 import os
 import subprocess
 
@@ -22,8 +22,8 @@ import pickle
 import pdb
 
 import tensorflow as tf
-from stable_baselines.common.tf_util import batch_to_seq, seq_to_batch
-from stable_baselines.common.tf_layers import conv, linear, conv_to_fc, lstm
+from stable_baselines3.common.tf_util import batch_to_seq, seq_to_batch
+from stable_baselines3.common.tf_layers import conv, linear, conv_to_fc, lstm
 from gym.envs.registration import register
 register(
     id='vrgym-v0',
