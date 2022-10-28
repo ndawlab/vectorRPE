@@ -6,4 +6,4 @@ function M = virmenGetFrame(w)
 M = virmenOpenGLRoutines(5,w);
 M = permute(M,[3 2 1]);
 
-M = M(:,:,3); % only get third RGB for black and white copy. this was added by Rachel
+M = uint8(255* M(:,:,3)); % only get third RGB for black and white copy. this was added by Rachel
