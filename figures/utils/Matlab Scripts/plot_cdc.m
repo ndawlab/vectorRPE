@@ -26,7 +26,7 @@ end
 if ~exist('tmp_cue_kernels_4cues_ConfDiscm_ConIps_z.mat','file')
     [rel_contrib_all,Fstat_all,R2_all,sesscellnum,term_names,res_cell_predicted,B_all,pred_inds_cell_all] = process_all_sessions_tmp_4cues_ConfDiscm_ConIps(res_cell_ac_sfn_z,'cue','norefit');
 
-    save tmp_cue_kernels_4cues_ConfDiscm_ConIps_z
+    save tmp_cue_kernels_4cues_ConfDiscm_ConIps_z_TEST
 else
     load tmp_cue_kernels_4cues_ConfDiscm_ConIps_z
 end
