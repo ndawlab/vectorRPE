@@ -227,7 +227,7 @@ def bin_data_by_vpos(data, vpositions, bin_size = 0.05):
     va_bins = np.arange(np.min(vpositions), np.max(vpositions)+ bin_size, bin_size)
     vpos_bin_idx = np.digitize(vpositions, va_bins)
 
-    binned_data = np.array([np.mean(data[vpos_bin_idx == i],0) for i in np.unique(vpos_bin_idx)]).T
+    binned_data = np.array([np.nanmean(data[vpos_bin_idx == i],0) for i in np.unique(vpos_bin_idx)]).T
 
     if bin_size != 0.05:
         return (va_bins, binned_data)
