@@ -164,6 +164,19 @@ def find_cue_locs_unbinned(binned_data, cueType, cuePositions, pos_bins, cue_bin
     return np.vstack(data_by_cue_type)
 
 """
+pes_: Vector RPE data in list form, list of length NUM_TRIALS, each entry is NUM_TIMESTEPS x NUM_UNITS
+cueLocs: cue locations PER trial, in list form, list of length NUM_TRIALS, each entry is vector with location of cues
+"""
+
+
+def get_timelocked_cues(pes_, cueLocs):
+    num_feats = pes_[0].shape[1]
+    return np.dstack(
+        [timelock_to_cue(pes_, cueLocs, pes_i) for pes_i in np.arange(num_feats)])
+
+
+
+"""
 given some raw activity, timelock to cues (cue type determined by the cueOnset)
 in this version, activity is given by ALL units, then it takes the num_unit needed.
 """
