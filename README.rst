@@ -10,6 +10,7 @@ Remaining work include:
 
 - [almost] more detailed instructions on requirements for running deepRL network with ViRMEn task
     - will need to update path issues for: initialize_vr (datapath + saved_info), generate_stimuli, stimulus_trains... and train_info, vr_env in gym_vr
+- add the retrained network data files below
 
 - [done] details on data structures and how they're formatted
 
