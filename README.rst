@@ -15,8 +15,8 @@ Remaining work include:
 
 - requirement files for figure analyses and deep RL agent [just output the .yml] 
 
-- [in progress] all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
-    - missing matlab script for timelock_to_cues. should add that in 
+- [done] all helper functions from Engelhard 2019 paper needed to run MATLAB scripts 
+    - missing matlab script for timelock_to_cues. should add that in [it was plot_timelock_to_cues.m]
 
 Work before publishing:
 
@@ -144,7 +144,9 @@ Data Availability and Description
 ^^^^^^^^^^^^
 Data will be available upon publication on Figshare or by request beforehand. 
 
-Data should be downloaded and placed in the `data` folder of this repository. Contents of data folder is organized as such: 
+Data should be downloaded and placed in the `data` folder of this repository. All data for successor representation model and distributional RL models can be generated from these data. 
+
+Contents of data folder is organized as such: 
 
 ::
 
