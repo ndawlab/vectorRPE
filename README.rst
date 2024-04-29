@@ -171,9 +171,9 @@ Contents of data folder is organized as such:
     │   │    ├── res_cell_acsfn_shuffbins_3s_new_fstat*_FO.mat         <- F-statistics for shuffled data of 303 neurons wrt to 5 behavioral variables during cue period
     │   │    ├── res_cell_acsfn_shuffbins_3s_new_fstat*_FO_outcome.mat <- F-statistics for shuffled data of 303 neurons wrt to reward
     │   ├── psycho_neural.mat                  <- psychometric curve for mice behavior (see Figure 2B)
-    │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 3D-F) 
-    │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 5C)  
-    │   ├── spline_basis30_int.mat             <- TODO: description for this 
+    │   ├── neural_behaviors.mat               <- processed neural data showing neurons modulated by behavioral variables (see Figure 2H-J) 
+    │   ├── ben_cdc_kernels_contracueunits.mat <- kernels for neural response to confirmatory and disconfirmatory contralateral cues (see Figure 4C)  
+    │   ├── spline_basis30_int.mat             <- Spline Basis needed to generate cue kernels in Figures 2F, 4C
 
 
 
